@@ -1,0 +1,40 @@
+{
+  "name": "express-expeditious",
+  "version": "0.1.0",
+  "description": "express caching middlware powered by expeditious",
+  "main": "lib/cache.js",
+  "scripts": {
+    "test": "npm run lint && npm run unit && npm run coverage",
+    "lint": "npm run jshint && npm run linelint",
+    "jshint": "jshint $(ls lib/*.js)",
+    "linelint": "linelint $(ls lib/*.js)",
+    "unit": "mocha test/",
+    "coverage": "nyc mocha test/ && nyc report --reporter=html"
+  },
+  "keywords": [
+    "expeditious",
+    "caching",
+    "cache",
+    "express",
+    "middlware"
+  ],
+  "author": "Evan Shortiss",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.0.0-rc.6",
+    "debug": "^2.2.0",
+    "expeditious": "git+https://github.com/evanshortiss/expeditious",
+    "moment": "^2.13.0",
+    "on-finished": "^2.3.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "expeditious-engine-memory": "git+https://github.com/evanshortiss/expeditious-engine-memory",
+    "express": "^4.14.0",
+    "mocha": "^2.5.3",
+    "nyc": "^6.6.1",
+    "proxyquire": "^1.7.9",
+    "sinon": "^1.17.4",
+    "supertest": "^1.2.0"
+  }
+}
