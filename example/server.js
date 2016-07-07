@@ -52,6 +52,11 @@ app.get('/cached', cacheMiddleware, function (req, res) {
   });
 });
 
+app.get('/cached/pipe', cacheMiddleware, function (req, res) {
+  console.log('loading google via express');
+  require('request').get('http://www.google.com').pipe(res);
+});
+
 app.listen(3000, function (err) {
   if (err) {
     throw err;
