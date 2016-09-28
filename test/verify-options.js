@@ -14,8 +14,12 @@ describe('verify-options', function () {
   });
 
   it('should throw AssertionError - invalid opts.shouldCache', function () {
+    var iomStub = sinon.stub().returns(true);
+
     expect(mod.bind(mod, {
-      expeditious: {},
+      expeditious: {
+        isObjectMode: iomStub
+      },
       shouldCache: 'nope'
     })).to.throw('opts.shouldCache should be a function');
   });
@@ -36,7 +40,7 @@ describe('verify-options', function () {
   it('should pass verification', function () {
     var iomStub = sinon.stub();
 
-    iomStub.returns(false);
+    iomStub.returns(true);
 
     mod({
       expeditious: {

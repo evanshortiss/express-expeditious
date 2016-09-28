@@ -11,7 +11,9 @@ var cacheMiddleware = expeditiousExpress({
     // Cache for 15 seconds
     defaultTtl: (15 * 1000),
     // Namespace for cache entries
-    namespace: 'express'
+    namespace: 'express',
+    // Must be in object mode
+    objectMode: true
   })
 });
 
@@ -32,9 +34,9 @@ function loadContent (err, callback) {
 app.get('/not-cached', function (req, res) {
   loadContent(req.query.error, function (err, data) {
     if (err) {
-      res.status(500).end('500 error!');
+      res.status(500).send('500 error!');
     } else {
-      res.end(data);
+      res.send(data);
     }
   });
 });
@@ -45,9 +47,9 @@ app.get('/not-cached', function (req, res) {
 app.get('/cached', cacheMiddleware, function (req, res) {
   loadContent(req.query.error, function (err, data) {
     if (err) {
-      res.status(500).end('500 error!');
+      res.status(500).send('500 error!');
     } else {
-      res.end(data);
+      res.send(data);
     }
   });
 });

@@ -2,12 +2,13 @@ Host: 127.0.0.1:3001
 User-Agent: curl/7.43.0
 Accept: */*
 
-HTTP/1.1 404 Not Found
+HTTP/1.1 304 Not Found
 X-Powered-By: Express
 X-Content-Type-Options: nosniff
 Content-Type: text/html; charset=utf-8
 Content-Length: 13
+ETag: W/"c8-j36pDBD4000wLNnKKK96Dg"
 Date: Thu, 23 Jun 2016 14:38:08 GMT
 Connection: keep-alive
 
-404 not found
+http response

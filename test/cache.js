@@ -44,7 +44,8 @@ describe('cache middleware', function () {
         expeditious: expeditious({
           engine: engineStubs,
           defaultTtl: 5000,
-          namespace: 'expresstest'
+          namespace: 'expresstest',
+          objectMode: true
         })
       })
     );
@@ -235,6 +236,35 @@ describe('cache middleware', function () {
 
       done();
     });
+  });
+
+  it('should respond with a 304', function (done) {
+    var fs = require('fs')
+      , path = require('path');
+
+    slowModuleStub.yields(null);
+    shouldCacheStub.returns(true);
+    engineStubs.get.onCall(0).yields(null, null);
+    engineStubs.set.yields(null, null);
+
+    engineStubs.get.onCall(1).yields(null, JSON.stringify({
+      etag: 'W/"c8-j36pDBD4000wLNnKKK96Dg"',
+      completeHttpBody: fs.readFileSync(
+        path.join(__dirname, './sample-http-response.txt'),
+        'utf8'
+      ).replace(/\n/g, '\r')
+    }));
+
+    request
+      .get('/')
+      .expect(200)
+      .end(function () {
+        request
+          .get('/')
+          .set('if-none-match', 'W/"c8-j36pDBD4000wLNnKKK96Dg"')
+          .expect(304)
+          .end(done);
+      });
   });
 
 });

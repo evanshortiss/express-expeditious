@@ -2,33 +2,87 @@ express-expeditious
 ===================
 [![Circle CI](https://circleci.com/gh/evanshortiss/express-expeditious/tree/master.svg?style=svg)](https://circleci.com/gh/evanshortiss/express-expeditious/tree/master)
 
-## What?
 An express middleware that simplifies caching responses for HTTP requests.
+
+## Features
+
+* Supports all response functions and data types json, html, binary
+(res.json, res.sendFile, res.pipe, etc.)
+* Caching engines can be swapped easily. Need to use memcached instead of one
+of the default adapters? Go ahead!
+* Retains ETag support from express 4.12.X
+* Custom generated cache keys via a simple function
+* Conditional caching behaviour via a simple function
+* Varied cache times can be determined based on status code
+* Caching engine can be accessed programmatically for simple cache management
+since it's just an expeditious instance
+
+## Example
+This example will cache responses in memory,
+```js
+// expeditious module, we'll use this to create cache instances
+var expeditious = require('expeditious');
+
+// express middleware that will use an expeditious instance for caching
+var expressExpeditious = require('express-expeditious');
+
+// The cache instance that our middleware will use
+var expeditiousInstance = expeditious({
+  namespace: 'expressCache',
+  // Store cache entries for 1 minute
+  defaultTtl: (60 * 1000),
+  // Store cache entries in memory
+  engine: require('expeditious-engine-memory')()
+});
+
+
+// Our express application
+var app = require('express')();
+
+// Cache all responses to all routes by injecting expeditious
+app.use(expressExpeditious({
+  expeditious: expeditiousInstance
+}));
+```
+
+## Debugging
+If you need to enable logging for this module, simply run your application in a
+session with a DEBUG environment variable set to "express-expeditious" like so:
+
+```
+export DEBUG=express-expeditious
+$ node server.js
+```
+
+This will cause *express-expeditious* to enable the *[debug](https://www.npmjs.com/package/debug)* logger it uses.
+
 
 ## Why?
 
-TLDR: Caching ~~can be~~ is hard. We've all screwed it up at some point (don't lie).
-_express-expeditious_ aims to simplify caching so you can spend time actually
-getting work done, and celebrating your awesome response times.
+TLDR: _express-expeditious_ is an express middleware that simplifies caching so
+you can spend time actually getting work done, and celebrating your
+application's awesome response times. Existing modules that try to provide a
+middleware for caching don't work for many use cases (_res.sendFile_,
+_res.pipe_), and provide a "black box" cache that you cannot easily perform
+CRUD operations on.
 
-Unfortunately, we're all too familiar with routes in web applications that load
+We're all too familiar with routes in web applications that load
 slowly, or have data that changes infrequently but is expensive to generate.
 Such requests are an excellent candidate for caching since it will save you
 resources, and result in happier users due to improved response times!
 
 A common strategy I've seen for caching such routes in express applications is
-demonstrated below. You've probably done something like this and found it
-tedious.
+demonstrated below.
 
 ```js
-var expensiveFn = require('./my-expensive-fn.js')
+var slowExpensiveFn = require('./my-expensive-fn.js')
   , cache = require('./my-cache.js');
 
 app.get('/expensive-query', function (req, res) {
   cache.get(req.originalUrl, onCacheResponse);
 
   function getData () {
-    expensiveFn(function (err, data) {
+    slowExpensiveFn(function (err, data) {
       if (err) {
         res.status(500).end('error getting data');
       } else {
@@ -53,16 +107,15 @@ app.get('/expensive-query', function (req, res) {
 });
 ```
 
-The solution above works, but it's repetitive, error prone, requires you to do all the hard work, and probably can't have the cache provider changed easily. When you start working on a team it will become even more difficult to manage a solution like this due to varying implementations across express routes, and inconsistent key-value conventions unless you have fantastic code reviews and processes.
+The solution above works, but it's repetitive, error prone, requires you to do
+all the hard work, and probably can't have the cache "provider" changed easily.
+When you start working on a team it will become even more difficult to manage a
+solution like this due to varying implementations across express routes, and
+inconsistent key-value conventions unless you have fantastic code reviews and
+processes.
 
-*express-expeditious* offers a solution to this problem by utilising express middleware and _expeditious_ instances to simplify your caching strategy. It decouples the cache interface from the middleware to facilitate easier programatic interaction with your cache while still allowing the middleware to use it to get its job done.
 
-## How?
-
-*express-expeditious* leverages the *expeditious* cache module to do the caching, while it deals with the HTTP and routing work! This means *express-expeditious* does not become a mysterious "black box" style cache that you're unable to invalidate and work with effectively.
-
-
-## Example
+## Extended Example
 ```js
 // expeditious module, we'll use this to create cache instances
 var expeditious = require('expeditious');
@@ -72,7 +125,7 @@ var expressExpeditious = require('express-expeditious');
 
 // The cache instance that our middleware will use
 var expeditiousInstance = expeditious({
-  namespace: 'my-express-cache',
+  namespace: 'expressCache',
   // Store cache entries for 1 minute
   defaultTtl: (60 * 1000),
   // Store cache entries in memory
@@ -143,11 +196,9 @@ If the default behaviour is undesirable that's fine, simply provide a _shouldCac
 var expressExpeditiousInstance = expressExpeditious({
   expeditious: yourExpeditiousInstance,
 
-  // here we want to cache only PUT and POST requests
+  // Here we want to cache only PUT requests (uncommon use case, but you can do it!)
   shouldCache: function (req) {
-    return ['post', 'put'].indexOf(
-      req.method.toLowerCase()
-    ) !== -1;
+    return 'put' === req.method.toLowerCase();
   }
 });
 ```
@@ -201,3 +252,10 @@ var expressExpeditiousInstance = expressExpeditious({
   }
 });
 ```
+
+## Changelog
+
+* 1.0.0 - Add ETag support.
+
+* <1.0.0 - Ye Olde Days. Expected objectMode to be "false" on expeditious
+instances and did not support ETags.
