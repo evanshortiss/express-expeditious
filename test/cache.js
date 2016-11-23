@@ -212,6 +212,30 @@ describe('cache middleware', function () {
       });
   });
 
+  it('should not call cache.set due to bad status code and no opts.statusCodeExpires being provided', function (done) {
+    slowModuleStub.yields(new Error('nope!'));
+    shouldCacheStub.returns(true);
+    engineStubs.get.yields(null, null);
+
+
+    request
+      .get('/')
+      .expect(500)
+      .end(function (err, res) {
+        expect(err).to.be.null;
+        expect(slowModuleStub.calledOnce).to.be.true;
+        expect(shouldCacheStub.calledOnce).to.be.true;
+        expect(engineStubs.get.calledOnce).to.be.true;
+
+        // This is the key to this test - cache should not be called at all
+        expect(engineStubs.set.calledOnce).to.be.false;
+
+        expect(res.text).to.equal('500 error');
+
+        done();
+      });
+  });
+
   it('should only cache.set once on concurrent requests', function (done) {
     slowModuleStub.yields(null);
     shouldCacheStub.returns(true);
