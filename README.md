@@ -187,10 +187,15 @@ These options are covered in greater detail below in the Behaviours section.
 ### When to Cache (_shouldCache_)
 
 #### Default
-By default only HTTP GET requests are cached using the URL as a unique identifier (key). The querystring is included in this unique identifier meaning _GET /users?name=john_ and _GET /users?name=jane_ are both cached separately.
+By default only HTTP GET requests with 200 responses are cached using the URL
+as a unique identifier (key). The querystring is included in this unique
+identifier meaning _GET /users?name=john_ and _GET /users?name=jane_ are both
+cached separately and only if a 200 response is received.
 
 #### Custom
-If the default behaviour is undesirable that's fine, simply provide a _shouldCache_ function in the options to *express-expeditious* and you can have any logic you desire to determine if a request should be cached.
+If the default behaviour is undesirable that's fine, simply provide a
+_shouldCache_ function in the options to *express-expeditious* and you can have
+any logic you desire to determine if a request should be cached.
 
 ```js
 var expressExpeditiousInstance = expressExpeditious({
@@ -202,6 +207,10 @@ var expressExpeditiousInstance = expressExpeditious({
   }
 });
 ```
+
+You can also use the _statusCodeExpires_ (see Status Code Variations below)
+to determine if you would like to cache a non 200 response.
+
 
 ### Cache Key Generation (_genCacheKey_)
 
@@ -229,14 +238,14 @@ var expressExpeditiousInstance = expressExpeditious({
 ### Status Code Variations (_statusCodeExpires_)
 
 #### Default
-The default behaviour for _express-expeditious_ is to cache all responses,
-regardless of status code, for the same duration/ttl.
+The default behaviour for _express-expeditious_ is to cache responses that have
+a status code of 200. Other status codes mean the response is not cached.
 
 #### Custom
-To have different cache ttl values for different status codes, simply add the
-_statusCodeExpires_ option, and specify the expiry/ttl value you would like
-to use for a particular status code in milliseconds. An example is provided
-below.
+To cache non 200 responses and have different cache TTL values for different
+status codes, simply add the _statusCodeExpires_ option, and specify the
+expiry/ttl value you would like to use for a particular status code in
+milliseconds. An example is provided below.
 
 ```js
 var expressExpeditiousInstance = expressExpeditious({
@@ -254,6 +263,9 @@ var expressExpeditiousInstance = expressExpeditious({
 ```
 
 ## Changelog
+
+* 2.0.0 - By default only 200 responses are cached now. Use _statusCodeExpires_
+to enable caching of non 200 responses.
 
 * 1.0.0 - Add ETag support.
 
