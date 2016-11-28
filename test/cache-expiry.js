@@ -24,18 +24,33 @@ describe('cache-expiry', function () {
     expect(ret).to.equal(1500);
   });
 
-  it('should use the default expeditious ttl value', function () {
-    var instance = mod({
-      expeditious: {
-        getDefaultTtl: getDefaultTtlStub
-      }
-    });
+  it(
+    'should return 0 due to bad status code and having no custom cache times',
+    function () {
+      var instance = mod({
+        expeditious: {
+          getDefaultTtl: getDefaultTtlStub
+        }
+      });
 
-    getDefaultTtlStub.returns(500);
+      expect(instance('500')).to.equal(0);
+    }
+  );
 
-    var ret = instance('500');
+  it(
+    'should return 0 due to bad status code and having no specific cache time',
+    function () {
+      var instance = mod({
+        statusCodeExpires: {
+          '503': 100
+        },
+        expeditious: {
+          getDefaultTtl: getDefaultTtlStub
+        }
+      });
 
-    expect(ret).to.equal(500);
-  });
+      expect(instance('500')).to.equal(0);
+    }
+  );
 
 });

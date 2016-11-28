@@ -1,6 +1,6 @@
 {
   "name": "express-expeditious",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "express caching middlware powered by expeditious",
   "main": "lib/cache.js",
   "files": [
