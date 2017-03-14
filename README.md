@@ -264,6 +264,10 @@ var expressExpeditiousInstance = expressExpeditious({
 
 ## Changelog
 
+* 2.1.1 - Ensure cache lock is removed when a response is not to be cached
+
+* 2.1.0 - Log details when `engine.set` calls fail
+
 * 2.0.0 - By default only 200 responses are cached now. Use _statusCodeExpires_
 to enable caching of non 200 responses.
 
