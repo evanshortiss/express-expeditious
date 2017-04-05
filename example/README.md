@@ -7,7 +7,7 @@ express-expeditious example
 git clone git@github.com:evanshortiss/express-expeditious.git
 cd express-expeditious
 npm install
-node example/server.js
+node run example
 ```
 
 ## Making Requests

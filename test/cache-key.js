@@ -38,7 +38,30 @@ describe('cache-key', function () {
         originalUrl: ORIGINAL_URL,
         method: 'GET'
       })
-    ).to.equal('GET - ' + ORIGINAL_URL);
+    ).to.equal('GET-' + ORIGINAL_URL);
+  });
+
+  it('should create a key using default behaviour - no session', function () {
+    var instance = mod({});
+
+    expect(
+      instance({
+        originalUrl: ORIGINAL_URL,
+        method: 'GET'
+      })
+    ).to.equal('GET-' + ORIGINAL_URL);
+  });
+
+  it('should create a key using default behaviour - session', function () {
+    var instance = mod({});
+
+    expect(
+      instance({
+        originalUrl: ORIGINAL_URL,
+        method: 'GET',
+        session: {id: '12345'}
+      })
+    ).to.equal('GET-12345-' + ORIGINAL_URL);
   });
 
 });

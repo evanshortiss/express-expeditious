@@ -1,6 +1,6 @@
 express-expeditious
 ===================
-[![Circle CI](https://circleci.com/gh/evanshortiss/express-expeditious/tree/master.svg?style=svg)](https://circleci.com/gh/evanshortiss/express-expeditious/tree/master)
+![TravisCI](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious)
 
 An express middleware that simplifies caching responses for HTTP requests.
 
@@ -11,14 +11,14 @@ An express middleware that simplifies caching responses for HTTP requests.
 * Caching engines can be swapped easily. Need to use memcached instead of one
 of the default adapters? Go ahead!
 * Retains ETag support from express 4.12.X
-* Custom generated cache keys via a simple function
-* Conditional caching behaviour via a simple function
-* Varied cache times can be determined based on status code
-* Caching engine can be accessed programmatically for simple cache management
-since it's just an expeditious instance
+* Support for custom cache keys
+* Determine caching behaviour using custom functions
+* Cache times can be configured based on status code
+* Simple cache invalidation using the expeditious instance passed in
 
 ## Example
-This example will cache responses in memory,
+This example will cache responses in node.js process memory:
+
 ```js
 // expeditious module, we'll use this to create cache instances
 var expeditious = require('expeditious');
@@ -31,18 +31,27 @@ var expeditiousInstance = expeditious({
   namespace: 'expressCache',
   // Store cache entries for 1 minute
   defaultTtl: (60 * 1000),
+  // Must use object mode
+  objectMode: true,
   // Store cache entries in memory
   engine: require('expeditious-engine-memory')()
 });
 
-
 // Our express application
 var app = require('express')();
 
-// Cache all responses to all routes by injecting expeditious
+// Cache all responses to all routes below this line
 app.use(expressExpeditious({
   expeditious: expeditiousInstance
 }));
+
+// the initial call to this will take 2.5 seconds, but any subsequent calls
+// will receive a response instantaneously for the next 60 seconds
+app.get('/slow-ping', (req, res) => {
+  setTimeout(() => {
+    res.end('slow-pong');
+  }, 2500);
+});
 ```
 
 ## Debugging
@@ -51,13 +60,14 @@ session with a DEBUG environment variable set to "express-expeditious" like so:
 
 ```
 export DEBUG=express-expeditious
-$ node server.js
+$ node my-app.js
 ```
 
-This will cause *express-expeditious* to enable the *[debug](https://www.npmjs.com/package/debug)* logger it uses.
+This will cause *express-expeditious* to enable the [debug](https://www.npmjs.com/package/debug) logger it uses.
 
 
-## Why?
+## Why Use This?
+I covered this in a [blogpost here](http://evanshortiss.com/development/javascript/nodejs/2016/07/07/better-caching-for-express.html), but there's a TLDR below if you don't feel like reading much.
 
 TLDR: _express-expeditious_ is an express middleware that simplifies caching so
 you can spend time actually getting work done, and celebrating your
@@ -66,110 +76,15 @@ middleware for caching don't work for many use cases (_res.sendFile_,
 _res.pipe_), and provide a "black box" cache that you cannot easily perform
 CRUD operations on.
 
-We're all too familiar with routes in web applications that load
-slowly, or have data that changes infrequently but is expensive to generate.
-Such requests are an excellent candidate for caching since it will save you
-resources, and result in happier users due to improved response times!
-
-A common strategy I've seen for caching such routes in express applications is
-demonstrated below.
-
-```js
-var slowExpensiveFn = require('./my-expensive-fn.js')
-  , cache = require('./my-cache.js');
-
-app.get('/expensive-query', function (req, res) {
-  cache.get(req.originalUrl, onCacheResponse);
-
-  function getData () {
-    slowExpensiveFn(function (err, data) {
-      if (err) {
-        res.status(500).end('error getting data');
-      } else {
-        res.end(data);
-
-        // Store in the cache for later calls
-        cache.put(req.originalUrl, data);
-      }
-    });
-  }
-
-  function onCacheResponse (err, data) {
-    if (err) {
-      console.error('failed to read cache. perform standard request');
-      getData();
-    } else if (data) {
-      res.end(data);
-    } else {
-      getData();
-    }
-  }
-});
-```
-
-The solution above works, but it's repetitive, error prone, requires you to do
-all the hard work, and probably can't have the cache "provider" changed easily.
-When you start working on a team it will become even more difficult to manage a
-solution like this due to varying implementations across express routes, and
-inconsistent key-value conventions unless you have fantastic code reviews and
-processes.
-
-
 ## Extended Example
-```js
-// expeditious module, we'll use this to create cache instances
-var expeditious = require('expeditious');
 
-// express middleware that will use an expeditious instance for caching
-var expressExpeditious = require('express-expeditious');
-
-// The cache instance that our middleware will use
-var expeditiousInstance = expeditious({
-  namespace: 'expressCache',
-  // Store cache entries for 1 minute
-  defaultTtl: (60 * 1000),
-  // Store cache entries in memory
-  engine: require('expeditious-engine-memory')()
-});
-
-// The middleware instance that express will use for caching
-var expressExpeditiousInstance = expressExpeditious({
-  expeditious: expeditiousInstance
-});
-
-// Our express application
-var app = require('express')();
-
-// Add a route that is slow to load. After the first call our cache will be
-// used to respond immediately for the next 60 seconds!
-app.get('/slow-loading-route',  expressExpeditiousInstance, function (req, res) {
-  console.log('received a request, please wait 3 seconds for a response');
-  setTimeout(function () {
-    res.end('Finally, an http response! Next time this will be faster!');
-  }, 3000);
-});
-
-// This route will not be cached since it does not have the middleware applied
-app.get('/flush-cache', function (req, res) {
-  // Call the flush method on our expeditious instance that the middleware uses
-  expeditiousInstance.flush(onFlushed);
-
-  function onFlushed (err) {
-    if (err) {
-      res.status(500).end('failed to flush cache');
-    } else {
-      res.end('cache flushed. requests will be slow again');
-    }
-  }
-});
-
-app.listen(3000);
-```
+See the example folder [here](https://github.com/evanshortiss/express-expeditious/tree/master/example).
 
 
 ## API
 
-The API is very basic in that this module is a factory function (like express) that returns a middleware function. A number of options are supported though.
+This module is a factory function like express, that returns a middleware
+function. A number of options are supported.
 
 #### module(opts)
 Create an _express-expeditious_ instance using _opts_. Supported options are:
@@ -188,7 +103,7 @@ These options are covered in greater detail below in the Behaviours section.
 
 #### Default
 By default only HTTP GET requests with 200 responses are cached using the URL
-as a unique identifier (key). The querystring is included in this unique
+as the primary unique identifier (key). The querystring is included in this
 identifier meaning _GET /users?name=john_ and _GET /users?name=jane_ are both
 cached separately and only if a 200 response is received.
 
@@ -215,22 +130,43 @@ to determine if you would like to cache a non 200 response.
 ### Cache Key Generation (_genCacheKey_)
 
 #### Default
-By default _req.originalUrl_ will be used as the key for cache entries.
-_req.originalUrl_ will be the entire original URL that the client requested,
-including the querystring, e.g _GET /branch/texas/users?name=alex_.
+The default cache key is generated using:
+
+* req.method
+* req.session.id (if exists)
+* req.originalUrl
+
+Here's a sample cache key from an application using sessions:
+
+```
+GET-fa0391d0a99ca3693bb8d658feabd28b-/cached
+```
+
+And here's one not using sessions:
+
+```
+GET-/cached
+```
+
 
 #### Custom
 You can define custom a custom key for incoming requests by providing a
-_genCacheKey_ option when creating _express-expeditious_ instances. Here's an
-example:
+_genCacheKey_ option when creating _express-expeditious_ instances.
+
+Here's an example for an API that has versioning based on a header:
 
 ```js
 var expressExpeditiousInstance = expressExpeditious({
   expeditious: yourExpeditiousInstance,
 
-  // This cache key is based on a session id and the request url
+  // cache key is based on a session id, api version, method, and url
   genCacheKey: function (req) {
-    return req.session.id + req.originalUrl
+    const sessionId = req.session.id;
+    const version = req.headers['x-api-version'];
+    const resource = req.originalUrl;
+    const method = req.method;
+
+    return `${method}-${resource}-${version}-${sessionId}`
   }
 });
 ```
@@ -263,6 +199,10 @@ var expressExpeditiousInstance = expressExpeditious({
 ```
 
 ## Changelog
+
+* 2.1.3 - Use coveralls. Migrate to TravisCI. Fix session issue. Update example.
+
+* 2.1.2 - Add warning about potential for session leak
 
 * 2.1.1 - Ensure cache lock is removed when a response is not to be cached
 
