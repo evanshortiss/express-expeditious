@@ -1,15 +1,16 @@
 'use strict';
 
-var expeditiousExpress = require('../lib/cache')
-  , app = require('express')()
-  , fs = require('fs');
+var expeditiousExpress = require('../lib/cache');
+var join = require('path').join;
+var app = require('express')();
+var fs = require('fs');
 
 var cacheMiddleware = expeditiousExpress({
   expeditious: require('expeditious')({
     // Use process memory as cache
     engine: require('expeditious-engine-memory')(),
     // Cache for 15 seconds
-    defaultTtl: (15 * 1000),
+    defaultTtl: 15 * 1000,
     // Namespace for cache entries
     namespace: 'express',
     // Must be in object mode
@@ -24,10 +25,17 @@ function loadContent (err, callback) {
     if (err) {
       callback(new Error('failed to get resource'));
     } else {
-      fs.readFile(__dirname + '/index.html', 'utf8', callback);
+      fs.readFile(join(__dirname, '/index.html'), 'utf8', callback);
     }
   }, 2000);
 }
+
+// Loads a page with some example content
+app.get('/', function (req, res) {
+  res.sendFile(
+    join(__dirname, '/example.html')
+  );
+});
 
 // This route does not use the cache middlware so it will always take
 // 2 seconds or more to load
@@ -56,7 +64,7 @@ app.get('/cached', cacheMiddleware, function (req, res) {
 
 app.get('/cached/pipe', cacheMiddleware, function (req, res) {
   console.log('loading google via express');
-  require('request').get('http://www.google.com').pipe(res);
+  require('request').get('http://facebook.com').pipe(res);
 });
 
 app.listen(3000, function (err) {
