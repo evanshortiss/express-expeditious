@@ -291,4 +291,11 @@ describe('cache middleware', function () {
       });
   });
 
+  it('should use the default memory engine', () => {
+    mod({
+      defaultTtl: 30000,
+      namespace: 'expresscache'
+    });
+  });
+
 });
