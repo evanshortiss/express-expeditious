@@ -2,12 +2,13 @@
 
 Dates are YYYY-MM-DD.
 
-## 3.0.0 / 2017-05-05
+## 3.0.0 / 2017-05-08
 * Drop support for node.js versions below v4.4.2.
 * Persist original "Date" headers.
 * Simplify module initialisation.
 * Add benchmarks and results to README.
-* Fix bug whereby 304 responses were not cached.
+* Fix bug whereby the response data that generated a 304 was not cached.
+* Add better benchmark and examples.
 
 
 ## Before 2017-04-28

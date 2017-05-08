@@ -6,7 +6,12 @@ const join = require('path').join;
 const cache = require('../lib/cache')({
   namespace: 'expressCache',
   // Store cache entries for 1 minute
-  defaultTtl: 60000
+  defaultTtl: 60000,
+
+  // By default only 200 responses are cached. We also want to cache 404s
+  statusCodeExpires: {
+    404: 90000
+  }
 });
 
 // Our express application
@@ -38,11 +43,19 @@ app.get('/sometimes-slow-ping', cache, pingHandler);
 // no caching applied here so it will always take 2.5 seconds to respond
 app.get('/always-slow-ping', pingHandler);
 
+// facilitates flushing of caches
 app.get('/flush-cache', (req, res) => {
-  cache.expeditious.flush(null,() => {
+  cache.expeditious.flush(null, () => {
     res.end('cache flushed');
   });
-})
+});
+
+// 404 page
+app.use(cache, (req, res) => {
+  setTimeout(() => {
+    res.status(404).render('not-found');
+  }, 1500);
+});
 
 app.listen(8080, (err) => {
   if (err) {

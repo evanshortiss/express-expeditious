@@ -1,5 +1,7 @@
 'use strict';
 
+// Data used in this benchmark is sourced from http://techslides.com/demos/country-capitals.json
+
 process.env.NODE_ENV = 'production'; // ensure full speed for express/pug
 
 const Benchmark = require('benchmark');

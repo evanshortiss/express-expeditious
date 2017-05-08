@@ -49,6 +49,8 @@ app.get('/sometimes-slow-ping', cache, pingHandler);
 
 // no caching applied here so it will always take 2.5 seconds to respond
 app.get('/always-slow-ping', pingHandler);
+
+app.listen(8080);
 ```
 
 ## Debugging
@@ -63,15 +65,15 @@ $ node your-app.js
 This will have *express-expeditious* to enable the [debug](https://www.npmjs.com/package/debug) logger it uses.
 
 
-## Why Use This Module?
+## Another Express Caching Module?
 I covered this in a [blogpost here](http://evanshortiss.com/development/javascript/nodejs/2016/07/07/better-caching-for-express.html), but there's a TLDR below if you don't feel like reading much.
 
 TLDR: _express-expeditious_ is an express middleware that simplifies caching so
 you can spend time actually getting work done and not worrying about caching.
 Existing modules that try to provide a middleware for caching don't work for
-many use cases. For example, _res.sendFile_ and _res.pipe_ don't work, or they
-provide a "black box" cache that you cannot easily perform CRUD operations on
-if you need to invalidate or inspect entries.
+many use cases. Sometimes _res.sendFile_ and _res.pipe_ don't work with those
+existing solutions. Many also provide a "black box" cache that you cannot
+easily perform CRUD operations on if you need to invalidate or inspect entries.
 
 
 ## Benchmarks
@@ -233,7 +235,7 @@ const expressExpeditiousInstance = expressExpeditious({
 ## Redis Example
 
 This is very similar _Quickstart_ example with the only exception being we pass
-a custom expeditious instance that has an `engine` set to and instance of
+a custom expeditious instance that has an `engine` set to an instance of
 `expeditious-engine-redis`.
 
 ```js
