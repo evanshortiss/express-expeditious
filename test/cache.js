@@ -256,7 +256,7 @@ describe('cache middleware', function () {
       expect(slowModuleStub.callCount).to.equal(2);
       expect(shouldCacheStub.callCount).to.equal(2);
       expect(engineStubs.get.callCount).to.equal(2);
-      expect(engineStubs.set.calledOnce).to.be.true;
+      expect(engineStubs.set.callCount).to.equal(1);
 
       done();
     });
