@@ -1,57 +1,56 @@
 express-expeditious
 ===================
-![TravisCI](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious) [![Coverage Status](https://coveralls.io/repos/github/evanshortiss/express-expeditious/badge.svg?branch=travis-session-fix)](https://coveralls.io/github/evanshortiss/express-expeditious?branch=travis-session-fix)
+![TravisCI](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious) [![Coverage Status](https://coveralls.io/repos/github/evanshortiss/express-expeditious/badge.svg?branch=master)](https://coveralls.io/github/evanshortiss/express-expeditious?branch=master)
 
 An express middleware that simplifies caching responses for HTTP requests.
 
 ## Features
 
-* Supports all response functions and data types json, html, binary
+* Caches all response functions and data types json, html, binary
 (res.json, res.sendFile, res.pipe, etc.)
 * Caching engines can be swapped easily. Need to use memcached instead of one
 of the default adapters? Go ahead!
 * Retains ETag support from express 4.12.X
 * Support for custom cache keys
-* Determine caching behaviour using custom functions
+* Determine caching behaviours using custom functions
 * Cache times can be configured based on status code
 * Simple cache invalidation using the expeditious instance passed in
 
-## Example
+## Quickstart
 This example will cache responses in node.js process memory:
 
 ```js
-// expeditious module, we'll use this to create cache instances
-var expeditious = require('expeditious');
-
 // express middleware that will use an expeditious instance for caching
-var expressExpeditious = require('express-expeditious');
+const getExpeditiousCache = require('express-expeditious');
 
-// The cache instance that our middleware will use
-var expeditiousInstance = expeditious({
-  namespace: 'expressCache',
+// need to pass some options for configuration purposes
+const cache = getExpeditiousCache({
+  // Namespace used to prevent cache conflicts. This is only a concern
+  // if using something like a shared memcached or redis instance for caching
+  namespace: 'expresscache',
+
   // Store cache entries for 1 minute
-  defaultTtl: (60 * 1000),
-  // Must use object mode
-  objectMode: true,
-  // Store cache entries in memory
-  engine: require('expeditious-engine-memory')()
+  defaultTtl: 60000
 });
 
 // Our express application
-var app = require('express')();
+const app = require('express')();
 
-// Cache all responses to all routes below this line
-app.use(expressExpeditious({
-  expeditious: expeditiousInstance
-}));
+function pingHandler (req, res) {
+  setTimeout(() => {
+    res.end('pong');
+  }, 2500);
+}
 
 // the initial call to this will take 2.5 seconds, but any subsequent calls
-// will receive a response instantaneously for the next 60 seconds
-app.get('/slow-ping', (req, res) => {
-  setTimeout(() => {
-    res.end('slow-pong');
-  }, 2500);
-});
+// will receive a response instantaneously for the next 60 seconds thanks
+// to our expeditious cache
+app.get('/sometimes-slow-ping', cache, pingHandler);
+
+// no caching applied here so it will always take 2.5 seconds to respond
+app.get('/always-slow-ping', pingHandler);
+
+app.listen(8080);
 ```
 
 ## Debugging
@@ -60,39 +59,65 @@ session with a DEBUG environment variable set to "express-expeditious" like so:
 
 ```
 export DEBUG=express-expeditious
-$ node my-app.js
+$ node your-app.js
 ```
 
-This will cause *express-expeditious* to enable the [debug](https://www.npmjs.com/package/debug) logger it uses.
+This will have *express-expeditious* to enable the [debug](https://www.npmjs.com/package/debug) logger it uses.
 
 
-## Why Use This?
+## Another Express Caching Module?
 I covered this in a [blogpost here](http://evanshortiss.com/development/javascript/nodejs/2016/07/07/better-caching-for-express.html), but there's a TLDR below if you don't feel like reading much.
 
 TLDR: _express-expeditious_ is an express middleware that simplifies caching so
-you can spend time actually getting work done, and celebrating your
-application's awesome response times. Existing modules that try to provide a
-middleware for caching don't work for many use cases (_res.sendFile_,
-_res.pipe_), and provide a "black box" cache that you cannot easily perform
-CRUD operations on.
+you can spend time actually getting work done and not worrying about caching.
+Existing modules that try to provide a middleware for caching don't work for
+many use cases. Sometimes _res.sendFile_ and _res.pipe_ don't work with those
+existing solutions. Many also provide a "black box" cache that you cannot
+easily perform CRUD operations on if you need to invalidate or inspect entries.
 
-## Extended Example
+
+## Benchmarks
+
+Here's the performance increase seen in simple benchmarks where a single
+client makes requests in series as quickly as possible. You can run the same
+tests using `npm run benchmark` locally inside this repo. All of these tests
+use `expeditious-engine-memory` for storage. You need to also run MongoDB
+locally on the default port of 27017.
+
+![](https://github.com/evanshortiss/express-expeditious/tree/master/benchmark/perf-v4.4.3.png)
+
+In a second test using Apache Bench for concurrent requests the difference is
+even more pronounced. Here's what happens if we throw 1000 requests at with a
+concurrency of 100 at the benchmark server:
+
+![](https://github.com/evanshortiss/express-expeditious/tree/master/benchmark/apache-bench-1000-req-100-concurrency.png)
+
+Naturally, the most significant gains are seen in endpoints that trigger CPU
+intensive work (rendering HTML from JSON), and endpoints that make calls to
+external APIs or databases with since these are bound by the latency of the
+other API being called.
+
+
+## Full Example
 
 See the example folder [here](https://github.com/evanshortiss/express-expeditious/tree/master/example).
 
 
 ## API
 
-This module is a factory function like express, that returns a middleware
+This module is a factory function, like express, that returns a middleware
 function. A number of options are supported.
 
 #### module(opts)
 Create an _express-expeditious_ instance using _opts_. Supported options are:
 
-* [Required] expeditious - The expeditious instance that will be used for caching response data for requests.
+* [Optional] expeditious - The expeditious instance that will be used for caching response data for requests.
 * [Optional] shouldCache - Function that will be called to determine if the response for a request should be cached.
 * [Optional] genCacheKey - Function that will be called to generate a custom key for reading and writing a response from the cache. By default _req.originalUrl_ is used as the key.
-* [Optional] statusCodeExpires
+* [Optional] statusCodeExpires - Useful if you want different status code responses to be cached for different durations
+* [Required/Optional] defaultTtl - This is required if the `expeditious` option is not passed. It is the time entries will remain in the cache.
+* [Required/Optional] namespace - This is required if the `expeditious` option is not passed. It's used as a namespace to prevent cache conflicts.
+* [Required/Optional] engine - This is required if the `expeditious` option is not passed. It is the storage engine for caching.
 
 These options are covered in greater detail below in the Behaviours section.
 
@@ -113,8 +138,9 @@ _shouldCache_ function in the options to *express-expeditious* and you can have
 any logic you desire to determine if a request should be cached.
 
 ```js
-var expressExpeditiousInstance = expressExpeditious({
-  expeditious: yourExpeditiousInstance,
+const expressExpeditiousInstance = expressExpeditious({
+  defaultTtl: 30000,
+  namespace: 'mycache',
 
   // Here we want to cache only PUT requests (uncommon use case, but you can do it!)
   shouldCache: function (req) {
@@ -156,8 +182,9 @@ _genCacheKey_ option when creating _express-expeditious_ instances.
 Here's an example for an API that has versioning based on a header:
 
 ```js
-var expressExpeditiousInstance = expressExpeditious({
-  expeditious: yourExpeditiousInstance,
+const expressExpeditiousInstance = expressExpeditious({
+  defaultTtl: 30000,
+  namespace: 'mycache',
 
   // cache key is based on a session id, api version, method, and url
   genCacheKey: function (req) {
@@ -184,34 +211,66 @@ expiry/ttl value you would like to use for a particular status code in
 milliseconds. An example is provided below.
 
 ```js
-var expressExpeditiousInstance = expressExpeditious({
-  expeditious: yourExpeditiousInstance,
+const expressExpeditiousInstance = expressExpeditious({
+  defaultTtl: 30000,
+  namespace: 'mycache',
 
   // We want a 500 error to be cached for 30 seconds, and a 404 to be cached
   // for 120 seconds. We also override the "defaultTtl" passed to expeditious
   // for 200 requests and cache them for 2 minutes!
   statusCodeExpires: {
-    200: (120 * 1000),
-    404: (60 * 1000),
-    500: (30 * 1000)
+    200: 120 * 1000,
+    404: 60 * 1000,
+    500: 30 * 1000
   }
 });
 ```
 
-## Changelog
 
-* 2.1.3 - Use coveralls. Migrate to TravisCI. Fix session issue. Update example.
+## CHANGELOG
 
-* 2.1.2 - Add warning about potential for session leak
+[Click here](https://github.com/evanshortiss/express-expeditious/blob/master/CHANGELOG.md) to see the CHANGELOG.md file.
 
-* 2.1.1 - Ensure cache lock is removed when a response is not to be cached
 
-* 2.1.0 - Log details when `engine.set` calls fail
+## Redis Example
 
-* 2.0.0 - By default only 200 responses are cached now. Use _statusCodeExpires_
-to enable caching of non 200 responses.
+This is very similar _Quickstart_ example with the only exception being we pass
+a custom expeditious instance that has an `engine` set to an instance of
+`expeditious-engine-redis`.
 
-* 1.0.0 - Add ETag support.
+```js
+// express middleware that will use an expeditious instance for caching
+const getExpeditiousCache = require('express-expeditious');
+const expeditious = require('expeditious');
 
-* <1.0.0 - Ye Olde Days. Expected objectMode to be "false" on expeditious
-instances and did not support ETags.
+// need to pass some options for configuration purposes
+const cache = getExpeditiousCache({
+  expeditious: expeditious({
+    defaultTtl: 60000,
+    namespace: 'expressrediscache',
+    engine: require('expeditious-engine-redis')({
+      // options for the redis driver
+      host: 'redis.acme.com',
+      port: 6379
+    }),
+    objectMode: true
+  })
+});
+
+// Our express application
+const app = require('express')();
+
+function pingHandler (req, res) {
+  setTimeout(() => {
+    res.end('pong');
+  }, 2500);
+}
+
+// the initial call to this will take 2.5 seconds, but any subsequent calls
+// will receive a response instantaneously for the next 60 seconds thanks
+// to our expeditious cache
+app.get('/sometimes-slow-ping', cache, pingHandler);
+
+// no caching applied here so it will always take 2.5 seconds to respond
+app.get('/always-slow-ping', pingHandler);
+```

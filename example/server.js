@@ -1,76 +1,66 @@
 'use strict';
 
-var expeditiousExpress = require('../lib/cache');
-var join = require('path').join;
-var app = require('express')();
-var fs = require('fs');
+const join = require('path').join;
 
-var cacheMiddleware = expeditiousExpress({
-  expeditious: require('expeditious')({
-    // Use process memory as cache
-    engine: require('expeditious-engine-memory')(),
-    // Cache for 15 seconds
-    defaultTtl: 15 * 1000,
-    // Namespace for cache entries
-    namespace: 'express',
-    // Must be in object mode
-    objectMode: true
-  })
+// express middleware that will use an expeditious instance for caching
+const cache = require('../lib/cache')({
+  namespace: 'expressCache',
+  // Store cache entries for 1 minute
+  defaultTtl: 60000,
+
+  // By default only 200 responses are cached. We also want to cache 404s
+  statusCodeExpires: {
+    404: 90000
+  }
 });
 
+// Our express application
+const app = require('express')();
 
-// Simulate slow loading content
-function loadContent (err, callback) {
-  setTimeout(function () {
-    if (err) {
-      callback(new Error('failed to get resource'));
-    } else {
-      fs.readFile(join(__dirname, '/index.html'), 'utf8', callback);
-    }
-  }, 2000);
+// configure view engine
+app.set('views', join(__dirname, './views'));
+app.set('view engine', 'pug');
+
+// render the home page
+app.get('/', (req, res) => {
+  res.render('index');
+});
+
+// express request handler that returns a pong for a ping
+function pingHandler (req, res) {
+  setTimeout(() => {
+    res.render('pong', {
+      url: req.originalUrl
+    });
+  }, 2500);
 }
 
-// Loads a page with some example content
-app.get('/', function (req, res) {
-  res.sendFile(
-    join(__dirname, '/example.html')
-  );
-});
+// the initial call to this will take 2.5 seconds, but any subsequent calls
+// will receive a response instantaneously for the next 60 seconds thanks
+// to our expeditious cache
+app.get('/sometimes-slow-ping', cache, pingHandler);
 
-// This route does not use the cache middlware so it will always take
-// 2 seconds or more to load
-app.get('/not-cached', function (req, res) {
-  loadContent(req.query.error, function (err, data) {
-    if (err) {
-      res.status(500).send('500 error!');
-    } else {
-      res.send(data);
-    }
+// no caching applied here so it will always take 2.5 seconds to respond
+app.get('/always-slow-ping', pingHandler);
+
+// facilitates flushing of caches
+app.get('/flush-cache', (req, res) => {
+  cache.expeditious.flush(null, () => {
+    res.end('cache flushed');
   });
 });
 
-// This route uses the cache middlware so it will take only 2 seconds to load
-// for the first call. After the first call it will return cached data for the
-// next 15 seconds (defaultTtl of expeditious instance above)
-app.get('/cached', cacheMiddleware, function (req, res) {
-  loadContent(req.query.error, function (err, data) {
-    if (err) {
-      res.status(500).send('500 error!');
-    } else {
-      res.send(data);
-    }
-  });
+// 404 page
+app.use(cache, (req, res) => {
+  setTimeout(() => {
+    res.status(404).render('not-found');
+  }, 1500);
 });
 
-app.get('/cached/pipe', cacheMiddleware, function (req, res) {
-  console.log('loading google via express');
-  require('request').get('http://facebook.com').pipe(res);
-});
-
-app.listen(3000, function (err) {
+app.listen(8080, (err) => {
   if (err) {
     throw err;
+  } else {
+    console.log('express-expeditious example server running at http://localhost:8080');
   }
-
-  console.log('app listening on port 3000');
 });

@@ -256,7 +256,7 @@ describe('cache middleware', function () {
       expect(slowModuleStub.callCount).to.equal(2);
       expect(shouldCacheStub.callCount).to.equal(2);
       expect(engineStubs.get.callCount).to.equal(2);
-      expect(engineStubs.set.calledOnce).to.be.true;
+      expect(engineStubs.set.callCount).to.equal(1);
 
       done();
     });
@@ -289,6 +289,13 @@ describe('cache middleware', function () {
           .expect(304)
           .end(done);
       });
+  });
+
+  it('should use the default memory engine', () => {
+    mod({
+      defaultTtl: 30000,
+      namespace: 'expresscache'
+    });
   });
 
 });
