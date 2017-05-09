@@ -84,7 +84,7 @@ tests using `npm run benchmark` locally inside this repo. All of these tests
 use `expeditious-engine-memory` for storage. You need to also run MongoDB
 locally on the default port of 27017.
 
-![](https://github.com/evanshortiss/express-expeditious/tree/master/benchmark/perf-v4.4.3.png)
+![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/perf-v4.4.3.png)
 
 In a second test using Apache Bench for concurrent requests the difference is
 even more pronounced. Here's what happens if we throw 1000 requests at with a
