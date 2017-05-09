@@ -90,7 +90,7 @@ In a second test using Apache Bench for concurrent requests the difference is
 even more pronounced. Here's what happens if we throw 1000 requests at with a
 concurrency of 100 at the benchmark server:
 
-![](https://github.com/evanshortiss/express-expeditious/tree/master/benchmark/apache-bench-1000-req-100-concurrency.png)
+![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/apache-bench-1000-req-100-concurrency.png)
 
 Naturally, the most significant gains are seen in endpoints that trigger CPU
 intensive work (rendering HTML from JSON), and endpoints that make calls to
