@@ -2,6 +2,14 @@
 
 Dates are YYYY-MM-DD.
 
+## 3.1.0 / 2017-05-18
+* Restructure source code.
+* Add API sugar to easily create instances with different cache settings.
+* Handle `transfer-encoding: chunked` correctly.
+* Add options to enable/disable session awareness.
+* Support `timestring` format for setting cache `defaultTtl`, e.g `'1 hour'`.
+* Update example code.
+
 ## 3.0.0 / 2017-05-08
 * Drop support for node.js versions below v4.4.2.
 * Persist original "Date" headers.

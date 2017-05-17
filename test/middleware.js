@@ -1,13 +1,12 @@
 'use strict';
 
-var expeditious = require('expeditious')
-  , supertest = require('supertest')
+var supertest = require('supertest')
   , expect = require('chai').expect
   , sinon = require('sinon');
 
 describe('cache middleware', function () {
 
-  var mod = require('../lib/cache')
+  var mod
     , app
     , request
     , slowModuleStub
@@ -25,6 +24,7 @@ describe('cache middleware', function () {
       keys: sinon.stub(),
       ttl: sinon.stub(),
       flush: sinon.stub(),
+      isObjectMode: sinon.stub().returns(true),
       getKeyWithoutNamespace: sinon.stub(),
       getNamespaceFromKey: sinon.stub()
     };
@@ -35,19 +35,18 @@ describe('cache middleware', function () {
     slowModuleStub = sinon.stub();
 
     // Create an instance
-    mod = require('../lib/cache');
+    mod = require('lib/middleware');
 
     // Add our cache to the express app
     app.use(
-      mod({
-        shouldCache: shouldCacheStub,
-        expeditious: expeditious({
-          engine: engineStubs,
+      mod(
+        {
+          shouldCache: shouldCacheStub,
           defaultTtl: 5000,
           namespace: 'expresstest',
-          objectMode: true
-        })
-      })
+          engine: engineStubs
+        }
+      )
     );
 
     // Convuluted function to simulate slow loading, chunked responses
@@ -62,20 +61,22 @@ describe('cache middleware', function () {
           if (err) {
             res.status(500).end('500 error');
           } else {
-            res.write('o');
+            res.write('o', 'utf8');
 
             // Simulate a slow stream
             setTimeout(function () {
-              res.write('k');
-              res.end();
-            }, 5);
+              res.end('k');
+            }, 50);
           }
         });
       }, PROCESSING_DELAY);
     }
 
-    app.get('/', onReq);
-    app.post('/', onReq);
+    app.get('/404', (req, res) => {
+      res.status(404).end('404 test for a non cached response');
+    });
+    app.get('/*', onReq);
+    app.post('/*', onReq);
 
     request = supertest(app);
   });
@@ -90,14 +91,20 @@ describe('cache middleware', function () {
       .get('/')
       .expect(200)
       .end(function (err, res) {
-        expect(engineStubs.get.calledOnce).to.be.true;
-        expect(engineStubs.set.calledOnce).to.be.true;
-        expect(shouldCacheStub.calledOnce).to.be.true;
-        expect(slowModuleStub.calledOnce).to.be.true;
 
-        expect(res.text).to.equal('ok');
+        // Need a timeout since the "cache.set" might be called a few
+        // milliseconds after the response has finished
+        setTimeout(() => {
+          expect(engineStubs.get.calledOnce).to.be.true;
+          expect(engineStubs.set.calledOnce).to.be.true;
+          expect(shouldCacheStub.calledOnce).to.be.true;
+          expect(slowModuleStub.calledOnce).to.be.true;
 
-        done();
+          expect(res.text).to.equal('ok');
+
+          done();
+        }, 100);
+
       });
   });
 
@@ -110,7 +117,7 @@ describe('cache middleware', function () {
 
     function doRequest (callback) {
       request
-        .get('/')
+        .get('/use-cache-for-subsequent-call')
         .expect(200)
         .end(callback);
     }
@@ -119,7 +126,6 @@ describe('cache middleware', function () {
       expect(err).to.be.null;
 
       setTimeout(function () {
-
         // On the second call we want the cached data from the first call to
         // be returned to us
         engineStubs.get.yields(
@@ -138,7 +144,7 @@ describe('cache middleware', function () {
 
           done();
         });
-      }, 20);
+      }, 100);
     });
   });
 
@@ -167,7 +173,7 @@ describe('cache middleware', function () {
 
           done();
         });
-      }, 20);
+      }, 100);
     });
   });
 
@@ -180,14 +186,18 @@ describe('cache middleware', function () {
       .get('/')
       .expect(200)
       .end(function (err, res) {
-        expect(err).to.be.null;
-        expect(slowModuleStub.calledOnce).to.be.true;
-        expect(shouldCacheStub.calledOnce).to.be.true;
-        expect(engineStubs.get.calledOnce).to.be.true;
-        expect(engineStubs.set.calledOnce).to.be.true;
-        expect(res.text).to.equal('ok');
+        // Need a timeout since the "cache.set" might be called a few
+        // milliseconds after the response has finished
+        setTimeout(() => {
+          expect(err).to.be.null;
+          expect(slowModuleStub.calledOnce).to.be.true;
+          expect(shouldCacheStub.calledOnce).to.be.true;
+          expect(engineStubs.get.calledOnce).to.be.true;
+          expect(engineStubs.set.calledOnce).to.be.true;
+          expect(res.text).to.equal('ok');
 
-        done();
+          done();
+        }, 100);
       });
   });
 
@@ -198,17 +208,20 @@ describe('cache middleware', function () {
     engineStubs.set.yields(new Error('cache.set error'), null);
 
     request
-      .get('/')
+      .get('/cache-set-error')
       .expect(200)
       .end(function (err, res) {
-        expect(err).to.be.null;
-        expect(slowModuleStub.calledOnce).to.be.true;
-        expect(shouldCacheStub.calledOnce).to.be.true;
-        expect(engineStubs.get.calledOnce).to.be.true;
-        expect(engineStubs.set.calledOnce).to.be.true;
-        expect(res.text).to.equal('ok');
 
-        done();
+        setTimeout(() => {
+          expect(err).to.be.null;
+          expect(slowModuleStub.calledOnce).to.be.true;
+          expect(shouldCacheStub.calledOnce).to.be.true;
+          expect(engineStubs.get.calledOnce).to.be.true;
+          expect(engineStubs.set.calledOnce).to.be.true;
+          expect(res.text).to.equal('ok');
+
+          done();
+        }, 100);
       });
   });
 
@@ -244,7 +257,7 @@ describe('cache middleware', function () {
 
     function doRequest (callback) {
       request
-        .get('/')
+        .get('/cache-set-once-only')
         .expect(200)
         .end(callback);
     }
@@ -253,12 +266,17 @@ describe('cache middleware', function () {
       doRequest,
       doRequest
     ], function () {
-      expect(slowModuleStub.callCount).to.equal(2);
-      expect(shouldCacheStub.callCount).to.equal(2);
-      expect(engineStubs.get.callCount).to.equal(2);
-      expect(engineStubs.set.callCount).to.equal(1);
 
-      done();
+      // Need a timeout since the "cache.set" might be called a few
+      // milliseconds after the response has finished
+      setTimeout(() => {
+        expect(slowModuleStub.callCount).to.equal(2);
+        expect(shouldCacheStub.callCount).to.equal(2);
+        expect(engineStubs.get.callCount).to.equal(2);
+        expect(engineStubs.set.callCount).to.equal(1);
+
+        done();
+      }, 100);
     });
   });
 
@@ -272,23 +290,35 @@ describe('cache middleware', function () {
     engineStubs.set.yields(null, null);
 
     engineStubs.get.onCall(1).yields(null, JSON.stringify({
-      etag: 'W/"c8-j36pDBD4000wLNnKKK96Dg"',
-      completeHttpBody: fs.readFileSync(
+      headers: {
+        ETag: 'W/"c8-j36pDBD4000wLNnKKK96Dg"'
+      },
+      body: fs.readFileSync(
         path.join(__dirname, './sample-http-response.txt'),
         'utf8'
       ).replace(/\n/g, '\r')
     }));
 
     request
-      .get('/')
+      .get('/expecting-a-304')
       .expect(200)
       .end(function () {
         request
-          .get('/')
+          .get('/expecting-a-304')
           .set('if-none-match', 'W/"c8-j36pDBD4000wLNnKKK96Dg"')
           .expect(304)
           .end(done);
       });
+  });
+
+  it('should not cache since the status code is non cacheable', (done) => {
+    shouldCacheStub.returns(true);
+    engineStubs.get.yields(null, null);
+
+    request
+      .get('/404')
+      .expect(404)
+      .end(done);
   });
 
   it('should use the default memory engine', () => {

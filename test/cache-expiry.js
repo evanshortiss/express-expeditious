@@ -5,7 +5,7 @@ var expect = require('chai').expect
 
 describe('cache-expiry', function () {
 
-  var mod = require('../lib/cache-expiry');
+  var mod = require('lib/cache-expiry');
   var getDefaultTtlStub;
 
   beforeEach(function () {
