@@ -16,17 +16,18 @@ overwritten with implementations that potentially contain bugs.
 
 ## Features
 
+* Seamlessly caches responses without the need to change route handlers.
 * Caches all response functions and data types json, html, binary
 (`res.json`, `res.sendFile`, `res.pipe`, etc.)
 * Cache storage engines can be swapped easily. Need to use memcached instead of
 the default adapters? Go ahead!
 * Is `express-session` (`req.session`) aware. This prevents users getting data
 that wasn't intended for them!
-* Retains ETag support from express 4.12.X and for all response types
+* Retains ETag support from express 4.12.X and for all response types.
 * Support for custom cache key generation.
-* Support for determination of caching behaviours using custom functions
-* Cache times can easily be on a per status code basis
-* Cache inspection and invalidation using the underlying expeditious instance
+* Support for determination of caching behaviours using custom functions.
+* Cache times can easily be on a per status code basis.
+* Cache inspection and invalidation using the underlying `expeditious` instance
 * Support for `timestring` format for setting cache timeouts. For example you
 can pass `'1 hour'` instead of `60 * 60 * 1000`.
 
@@ -119,29 +120,39 @@ This will have *express-expeditious* to enable the [debug](https://www.npmjs.com
 
 
 ## Benchmarks
+Here's the performance increase seen in simple benchmarks using Apache Bench.
+You can run the same tests using the following commands:
 
-Here's the performance increase seen in simple benchmarks where a single
-client makes requests in series as quickly as possible. You can run the same
-tests using `npm run benchmark` locally inside this repo. All of these tests
-use `expeditious-engine-memory` for storage. You need to also run MongoDB
-locally on the default port of 27017.
+```
+cd express-expeditious/
+npm install
+npm run benchmark-server
+```
 
-![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/perf-v4.4.3.png)
+Now in another terminal run:
 
-In a second test using Apache Bench for concurrent requests the difference is
-even more pronounced. Here's what happens if we throw 1000 requests at with a
-concurrency of 100 at the benchmark server:
+```
+ab -n 1000 -c 100 http://localhost:8080/$ENDPOINT_TO_TEST
+```
 
-![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/apache-bench-1000-req-100-concurrency.png)
+All of these tests use `expeditious-engine-memory` for storage. You need to run
+MongoDB locally on its default port of 27017.
 
-Naturally, the most significant gains are seen in endpoints that trigger CPU
-intensive work (rendering HTML from JSON), and endpoints that make calls to
-external APIs or databases with since these are bound by the latency of the
-other API being called.
+Here are the requests per second averaged from 4 runs:
+
+![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/requests-per-second.png)
+
+And here is the average time taken for each request over 4 runs:
+
+![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/time-per-request.png)
+
+It's clear that with caching applied using *express-expeditious* latency is
+reduced and requests per second increases significantly. Needless to say, you
+should cache endpoints when possible to ensure latency is reduced and increase
+the number of requests per second that you can serve.
 
 
 ## Full Example
-
 See the example folder [here](https://github.com/evanshortiss/express-expeditious/tree/master/example).
 
 You can hit HTTP endpoints on the example server using the following URLs:
@@ -157,7 +168,6 @@ calls will use *express-expeditious* to respond instantly using the cache.
 
 
 ## API
-
 This module is a factory function (kind of like express) that returns a
 middleware function. A number of options are supported and are explained in the
 following sections.

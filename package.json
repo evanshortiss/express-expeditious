@@ -22,6 +22,7 @@
     "unit": "NODE_PATH=. mocha test/",
     "example": "NODE_ENV=production node example/server.js",
     "benchmark": "NODE_ENV=production node --max-old-space-size=2048 --max-semi-space-size=512 --noconcurrent_sweeping benchmark/index.js",
+    "benchmark-server": "NODE_ENV=production node --max-old-space-size=2048 --max-semi-space-size=512 --noconcurrent_sweeping benchmark/server.js",
     "coveralls": "npm run coverage && cat coverage/lcov.info | coveralls",
     "coverage": "NODE_PATH=. nyc mocha test/ && nyc report --reporter=lcov",
     "check-coverage": "nyc check-coverage --statements 95 --branches 95 --lines 95 --functions 95"
