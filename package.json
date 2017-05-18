@@ -71,8 +71,7 @@
     "request": "~2.72.0",
     "require-uncached": "~1.0.3",
     "sinon": "~1.17.4",
-    "supertest": "~1.2.0",
-    "v8-profiler": "~5.7.0"
+    "supertest": "~1.2.0"
   },
   "engines": {
     "node": ">=4.4.2"
