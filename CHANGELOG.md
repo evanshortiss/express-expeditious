@@ -4,11 +4,16 @@ Dates are YYYY-MM-DD.
 
 ## 3.1.0 / 2017-05-18
 * Restructure source code.
-* Add API sugar to easily create instances with different cache settings.
-* Handle `transfer-encoding: chunked` correctly.
+* Minor performance improvements.
+* Add `sessionAware` option and `withSessionAwareness()` function to facilitate
+turning `express-session` awareness on and off as needed.
+* Add API sugar to easily create instances with different settings.
+* Fix bug where `transfer-encoding: chunked` responses cloud be corrupted.
 * Add options to enable/disable session awareness.
+* Add `x-expeditious-cache` response header to indicate cache `hit` or `miss` to
+calling clients.
 * Support `timestring` format for setting cache `defaultTtl`, e.g `'1 hour'`.
-* Update example code.
+* Update example code and benchmark information.
 
 ## 3.0.0 / 2017-05-08
 * Drop support for node.js versions below v4.4.2.
@@ -34,4 +39,4 @@ to enable caching of non 200 responses.
 * 1.0.0 - Add ETag support.
 
 * <1.0.0 - Ye Olde Days. Expected objectMode to be "false" on expeditious
-instances and did not support ETags.
+instances. Did not support ETags. Was not `express-session` safe.

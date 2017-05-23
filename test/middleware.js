@@ -115,36 +115,37 @@ describe('cache middleware', function () {
     engineStubs.set.yields(null);
     engineStubs.get.yields(null, null);
 
-    function doRequest (callback) {
-      request
-        .get('/use-cache-for-subsequent-call')
-        .expect(200)
-        .end(callback);
-    }
+    request
+      .get('/use-cache-for-subsequent-call')
+      .expect(200)
+      .expect('x-expeditious-cache', 'miss')
+      .end(function (err, firstRes) {
+        expect(err).to.equal(null);
 
-    doRequest(function (err, firstRes) {
-      expect(err).to.be.null;
+        setTimeout(function () {
+          // On the second call we want the cached data from the first call to
+          // be returned to us
+          engineStubs.get.yields(
+            null,
+            engineStubs.set.getCall(0).args[1]
+          );
 
-      setTimeout(function () {
-        // On the second call we want the cached data from the first call to
-        // be returned to us
-        engineStubs.get.yields(
-          null,
-          engineStubs.set.getCall(0).args[1]
-        );
+          request
+            .get('/use-cache-for-subsequent-call')
+            .expect('x-expeditious-cache', 'hit')
+            .expect(200)
+            .end(function (err, secondRes) {
+              expect(err).to.be.null;
+              expect(firstRes.text).to.equal(secondRes.text);
 
-        doRequest(function (err, secondRes) {
-          expect(err).to.be.null;
-          expect(firstRes.text).to.equal(secondRes.text);
+              expect(slowModuleStub.calledOnce).to.be.true;
+              expect(engineStubs.get.callCount).to.equal(2);
+              expect(engineStubs.set.calledOnce).to.be.true;
+              expect(shouldCacheStub.callCount).to.equal(2);
 
-          expect(slowModuleStub.calledOnce).to.be.true;
-          expect(engineStubs.get.callCount).to.equal(2);
-          expect(engineStubs.set.calledOnce).to.be.true;
-          expect(shouldCacheStub.callCount).to.equal(2);
-
-          done();
-        });
-      }, 100);
+              done();
+            });
+        }, 100);
     });
   });
 
@@ -184,8 +185,10 @@ describe('cache middleware', function () {
 
     request
       .get('/')
+      .expect('x-expeditious-cache', 'miss')
       .expect(200)
       .end(function (err, res) {
+        expect(err).to.equal(null);
         // Need a timeout since the "cache.set" might be called a few
         // milliseconds after the response has finished
         setTimeout(() => {
