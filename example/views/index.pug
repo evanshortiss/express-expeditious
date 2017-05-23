@@ -5,11 +5,17 @@ html(lang="en")
   body
     h2 express-expeditious example server
 
-    p
-      a(href="/sometimes-slow-ping") This will load slowly on the first click
+    p This page might have loaded slowly. If you refresh now it will load immediately since the server will return a cached version!
+
+    p All routes below load slowly on the initial call, but then load immediately on subsequent calls.
 
     p
-      a(href="/always-slow-ping") This will always load slowly
-
+      a(href="/ping") /ping - returns a pong
+    p
+      a(href="/pipe") /pipe - pipes http://facebook.com to you
+    p
+      a(href="/sendfile") /sendfile - returns the code powering this example
+    p
+      a(href="/write") /write - writes a response in chunks
     p
       a(href="/flush-cache") Flush Cache. Everything will load slow again!

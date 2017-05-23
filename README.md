@@ -2,55 +2,171 @@ express-expeditious
 ===================
 ![TravisCI](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious) [![Coverage Status](https://coveralls.io/repos/github/evanshortiss/express-expeditious/badge.svg?branch=master)](https://coveralls.io/github/evanshortiss/express-expeditious?branch=master)
 
-An express middleware that simplifies caching responses for HTTP requests.
+An express middleware that simplifies caching responses for HTTP requests of any
+type. It also handles many unique cases such as piping data, using sessions, and
+ETags. This middleware is implemented at the socket level, so it is entirely
+transparent to the response methods such as `res.json`, `res.end`, etc. and
+stays out of your way as a result.
+
+
+## How Does it Work?
+
+Using the default settings it works by:
+
+1. Generating a cache key for all incoming GET requests
+2. Checking if that key already exists in a storage engine
+3. Responding with the cached data if found, otherwise process the request using
+the defined router logic and place the response in the cache if the status code
+was a HTTP 200 (success).
+
 
 ## Features
 
-* Caches all response functions and data types json, html, binary
-(res.json, res.sendFile, res.pipe, etc.)
-* Caching engines can be swapped easily. Need to use memcached instead of one
-of the default adapters? Go ahead!
-* Retains ETag support from express 4.12.X
-* Support for custom cache keys
-* Determine caching behaviours using custom functions
-* Cache times can be configured based on status code
-* Simple cache invalidation using the expeditious instance passed in
+* Seamlessly caches responses without the need to modify route handler code.
+* Caches all response functions and data types, e.g `res.json`, `res.sendFile`,
+`res.pipe`, etc.
+* Cache storage engines can be swapped easily. You're not limited to node.js
+memory or redis (but there are adapters prebuilt for those two).
+* Is `express-session` (`req.session`) aware. This ensures user data is not
+accidentally shared when two users request the same URL.
+* Retains ETag (HTTP 304) support from express 4.12.X and for all response types
+including those piped or of file format.
+* Support for custom cache key generation.
+* Can override caching behaviours using a custom function.
+* Cache times can be configured on a per status code basis.
+* Cache inspection and invalidation using the underlying `expeditious` instance
+* Support for `timestring` format for setting cache timeouts. For example you
+can pass `'1 hour'` instead of `60 * 60 * 1000`.
+* Responses contain an `x-expeditious-cache` header that states either `hit` or
+`miss` so clients can determine if the data is a cached copy.
 
-## Quickstart
-This example will cache responses in node.js process memory:
 
+## Install
+
+```
+npm install express-expeditious --save
+```
+
+You can also install one of these to customise the cache storage location:
+
+* expeditious-engine-redis (this is the default)
+* expeditious-engine-memory
+
+If you'd like to write an engine of your own for another storage system then take a look at the source
+code for those modules - it's pretty easy and there's more information [here](https://github.com/evanshortiss/expeditious#custom-engines).
+
+## Usage
+These examples will cache any successful request - this is a request that you
+send a 200 status code to the client.
+
+
+### Using the In-Memory Cache
 ```js
-// express middleware that will use an expeditious instance for caching
 const getExpeditiousCache = require('express-expeditious');
+const express = require('express');
 
-// need to pass some options for configuration purposes
 const cache = getExpeditiousCache({
-  // Namespace used to prevent cache conflicts. This is only a concern
-  // if using something like a shared memcached or redis instance for caching
+  // Namespace used to prevent cache conflicts, must be alphanumeric
   namespace: 'expresscache',
 
-  // Store cache entries for 1 minute
-  defaultTtl: 60000
+  // Store cache entries for 1 minute (can also pass milliseconds e.g 60000)
+  defaultTtl: '1 minute'
 });
 
-// Our express application
-const app = require('express')();
-
-function pingHandler (req, res) {
-  setTimeout(() => {
-    res.end('pong');
-  }, 2500);
-}
+const app = express();
 
 // the initial call to this will take 2.5 seconds, but any subsequent calls
-// will receive a response instantaneously for the next 60 seconds thanks
-// to our expeditious cache
-app.get('/sometimes-slow-ping', cache, pingHandler);
+// will receive a response instantly from cache for the next hour
+app.get('/ping', cache.withTtl('1 hour'), (req, res) => {
+  setTimeout(() => {
+    res.end('pong');
+  }, 2000);
+});
 
-// no caching applied here so it will always take 2.5 seconds to respond
-app.get('/always-slow-ping', pingHandler);
+// Cache everything below this line for 1 minute (defaultTtl)
+app.use(cache);
+```
 
-app.listen(8080);
+
+### Using Redis
+Just like before, except we pass a redis engine:
+
+```js
+const getExpeditiousCache = require('express-expeditious');
+const express = require('express');
+
+const cache = getExpeditiousCache({
+  namespace: 'expresscache',
+  defaultTtl: '1 minute',
+  engine: require('expeditious-engine-redis')({
+    // options for the redis driver
+    host: 'redis.acme.com',
+    port: 6379
+  })
+});
+
+const app = express();
+
+app.use(cache);
+
+app.get('/ping', (req, res) => {
+  setTimeout(() => {
+    res.end('pong');
+  }, 2000);
+});
+```
+
+### Using Modifers
+You can modify cache behaviour for specific endpoint or routers easily like so:
+
+```js
+const app = require('express')();
+const isEmpty = require('lodash.isempty');
+const products = require('lib/products');
+const cache = require('express-expeditious')({
+  namespace: 'expresscache',
+  defaultTtl: '1 minute'
+});
+
+
+/**
+ * Exposes a /products endpoint that can be queried for a list of products.
+ *
+ * If the client provides a querystring then the request will NOT be cached.
+ *
+ * The endpoint is also session independent meaning the data returned is the
+ * same regardless of the user that calls, so we set sessionAware to false since
+ * it will reduce resource usage.
+ */
+app.get(
+  '/products',
+
+  cache
+    .withSessionAwareness(false)
+    .withCondition((req) => { return isEmpty(req.query) }),
+
+  (req, res, next) => {
+    products.list(req.query)
+      .then((listOfProducts) => res.json(listOfProducts))
+      .catch(next)
+  }
+);
+
+
+/**
+ * Expose a /orders endpoint that caches all HTTP 200 responses for 5 minutes.
+ * It overrides the default behaviour and also caches 404 responses for a given
+ * request for 1 minute - by default only 200 responses are cached
+ */
+app.use(
+  '/orders',
+
+  cache
+    .withTtl('5 minutes')
+    .withTtlForStatus('1 minute', 404),
+
+  require('lib/routes/orders')
+);
 ```
 
 ## Debugging
@@ -62,69 +178,147 @@ export DEBUG=express-expeditious
 $ node your-app.js
 ```
 
-This will have *express-expeditious* to enable the [debug](https://www.npmjs.com/package/debug) logger it uses.
-
-
-## Another Express Caching Module?
-I covered this in a [blogpost here](http://evanshortiss.com/development/javascript/nodejs/2016/07/07/better-caching-for-express.html), but there's a TLDR below if you don't feel like reading much.
-
-TLDR: _express-expeditious_ is an express middleware that simplifies caching so
-you can spend time actually getting work done and not worrying about caching.
-Existing modules that try to provide a middleware for caching don't work for
-many use cases. Sometimes _res.sendFile_ and _res.pipe_ don't work with those
-existing solutions. Many also provide a "black box" cache that you cannot
-easily perform CRUD operations on if you need to invalidate or inspect entries.
+This will have *express-expeditious* to enable the
+[debug](https://www.npmjs.com/package/debug) logger module it uses.
 
 
 ## Benchmarks
+Here's the performance increase seen in simple benchmarks using Apache Bench.
+All of these tests use `expeditious-engine-memory` for storage meaning the
+node.js process memory is used.
 
-Here's the performance increase seen in simple benchmarks where a single
-client makes requests in series as quickly as possible. You can run the same
-tests using `npm run benchmark` locally inside this repo. All of these tests
-use `expeditious-engine-memory` for storage. You need to also run MongoDB
-locally on the default port of 27017.
+You can run the same tests using the following commands:
 
-![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/perf-v4.4.3.png)
+```
+# after cloning the repo
+cd express-expeditious/
+npm install
+npm run benchmark-server
+```
 
-In a second test using Apache Bench for concurrent requests the difference is
-even more pronounced. Here's what happens if we throw 1000 requests at with a
-concurrency of 100 at the benchmark server:
+You need to run MongoDB locally on its default port of 27017 also. These tests
+were performed with MongoDB running inside docker using the following command:
 
-![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/apache-bench-1000-req-100-concurrency.png)
 
-Naturally, the most significant gains are seen in endpoints that trigger CPU
-intensive work (rendering HTML from JSON), and endpoints that make calls to
-external APIs or databases with since these are bound by the latency of the
-other API being called.
+```
+docker run --name mongodb -p 27017:27017 -p 28017:28017 -d mongo
+```
+
+Now, to start the tests run the command below in another terminal:
+
+```
+ab -n 1000 -c 100 http://localhost:8080/$ENDPOINT_TO_TEST
+```
+
+Here are the requests per second averaged from 4 runs:
+
+![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/requests-per-second.png)
+
+And here is the average time taken for each request averaged over 4 runs:
+
+![](https://raw.githubusercontent.com/evanshortiss/express-expeditious/master/benchmark/time-per-request.png)
+
+It's clear that with caching applied using *express-expeditious* latency is
+reduced so your application will feel more responsive and the amount of requests
+per second that can be served increases significantly.
 
 
 ## Full Example
-
 See the example folder [here](https://github.com/evanshortiss/express-expeditious/tree/master/example).
+
+You can hit HTTP endpoints on the example server using the following URLs:
+
+* http://localhost:8080/ - Uses `res.render` to render a homepage
+* http://localhost:8080/ping - Uses `res.end`
+* http://localhost:8080/sendfile - Uses `res.sendFile`
+* http://localhost:8080/pipe - Uses `res.pipe`
+* http://localhost:8080/write - Uses `res.write`
+
+All of these URLs respond after 2 seconds on the first call, but subsequent
+calls will use *express-expeditious* to respond instantly using the cache.
 
 
 ## API
+This module is a factory function (similar to express) that returns a
+middleware function. A number of options are supported and are explained in the
+following sections.
 
-This module is a factory function, like express, that returns a middleware
-function. A number of options are supported.
-
-#### module(opts)
-Create an _express-expeditious_ instance using _opts_. Supported options are:
+### module(opts)
+Create a middleware `instance` using _opts_. Supported options are:
 
 * [Optional] expeditious - The expeditious instance that will be used for caching response data for requests.
 * [Optional] shouldCache - Function that will be called to determine if the response for a request should be cached.
-* [Optional] genCacheKey - Function that will be called to generate a custom key for reading and writing a response from the cache. By default _req.originalUrl_ is used as the key.
-* [Optional] statusCodeExpires - Useful if you want different status code responses to be cached for different durations
-* [Required/Optional] defaultTtl - This is required if the `expeditious` option is not passed. It is the time entries will remain in the cache.
-* [Required/Optional] namespace - This is required if the `expeditious` option is not passed. It's used as a namespace to prevent cache conflicts.
-* [Required/Optional] engine - This is required if the `expeditious` option is not passed. It is the storage engine for caching.
+* [Optional] genCacheKey - Function that will be called to generate a custom key for reading and writing a response
+* [Optional] sessionAware - Determines if the default cache key generation will
+include the session token in the key. Defaults to true since this is the safest
+option to prevent data leaks between users. If `genCacheKey` is also supplied
+then this option is ignored.
+from the cache. By default _req.originalUrl_ is used as the key.
+* [Optional] statusCodeExpires - Useful if you want different status code responses to be cached for different
+durations.
+* [Required/Optional] defaultTtl - This is required if the `expeditious` option is not passed. Represents time entries
+will remain in the cache. Can be set to any value the `timestring` module accepts.
+* [Required/Optional] namespace - This is required if the `expeditious` option is not passed. It's used as a namespace
+to prevent cache conflicts.
+* [Required/Optional] engine - This is required if the `expeditious` option is not passed. It is the storage engine for
+caching.
 
-These options are covered in greater detail below in the Behaviours section.
+These options are covered in greater detail in the behaviours section below.
+
+### instance.withTtl(number)
+Returns a new cache middleware that has a `defaultTtl` setting of `number`, but
+inherits other values of the parent instance.
+
+```js
+const cache = require('express-expeditious')({
+  namespace: 'mycache',
+  defaultTtl: '30 minutes'
+});
+
+const userRoutes = require('./routes/users');
+
+// Set cache time (defaultTtl) for /users to 15 minutes
+app.use('/users', cache.withTtl('15 minutes'), userRoutes);
+```
+
+### instance.withNamespace(string)
+Creates a new cache instance with the given namespace. All other settings are
+inherited from the parent instance.
+
+### instance.withTtlForStatus(ttl, statusCode)
+Creates a new cache instance with the given ttl for a specific status code.
+All other settings are inherited from the parent instance. Previously supplied
+values for `statusCodeExpires` will be used, but the values you pass to this
+function will override if a conflict in values is found.
+
+### instance.withCondition(function)
+Returns a new cache middleware that has a `shouldCache` setting of its parent
+overwritten by the passed function. Passing nothing will create an instance
+without a `shouldCache` entry. Other settings are inherited.
+
+### instance.withCacheKey(function)
+Returns a new cache middleware that has a `genCacheKey` setting of its parent
+overwritten by the passed function. Passing nothing will create an instance
+without a `genCacheKey` entry. Other settings are inherited.
+
+### instance.withSessionAwareness([boolean])
+Returns a new cache instance that either respects or ignores sessions. Pass
+_true_ to create a clone of the original instance, but ignore sessions. Passing
+_false_ will create an instance that will include session IDs in generated cache
+keys. Passing no arguments is treated the same as passing _true_.
+
+NOTE: If you supply a `genCacheKey` or `withCacheKey` option then this option
+will not apply since you have chosen to generate cache keys manually.
+
+### instance.flush([string, ]callback)
+Deletes all cache entries associated with this middleware namespace and fires
+the callback once complete. If you supply a _string_ for the first parameter
+this will be passed to the flush function to target specific keys.
 
 
 ## Behaviours
 
-### When to Cache (_shouldCache_)
+### When to use the Cache (_shouldCache_ or _withCondition_)
 
 #### Default
 By default only HTTP GET requests with 200 responses are cached using the URL
@@ -138,14 +332,19 @@ _shouldCache_ function in the options to *express-expeditious* and you can have
 any logic you desire to determine if a request should be cached.
 
 ```js
-const expressExpeditiousInstance = expressExpeditious({
+const cache = expressExpeditious({
   defaultTtl: 30000,
   namespace: 'mycache',
 
-  // Here we want to cache only PUT requests (uncommon use case, but you can do it!)
   shouldCache: function (req) {
+    // by default this middleware will cache all successful PUT requests
     return 'put' === req.method.toLowerCase();
   }
+});
+
+const cacheWhenNoSessionExists = cache.withCondition((req, res) => {
+  // if req.session is not found then the middleware will cache this request
+  return req.hasOwnProperty('session') === false;
 });
 ```
 
@@ -153,22 +352,23 @@ You can also use the _statusCodeExpires_ (see Status Code Variations below)
 to determine if you would like to cache a non 200 response.
 
 
-### Cache Key Generation (_genCacheKey_)
+### Cache Key Generation (_genCacheKey_ or _withCacheKey_)
 
 #### Default
 The default cache key is generated using:
 
 * req.method
-* req.session.id (if exists)
+* req.session.id (if you are using `express-session`)
 * req.originalUrl
 
-Here's a sample cache key from an application using sessions:
+Here's a sample cache key from an application or route that's using
+`express-session`:
 
 ```
 GET-fa0391d0a99ca3693bb8d658feabd28b-/cached
 ```
 
-And here's one not using sessions:
+And here's one not using `express-session`:
 
 ```
 GET-/cached
@@ -182,7 +382,7 @@ _genCacheKey_ option when creating _express-expeditious_ instances.
 Here's an example for an API that has versioning based on a header:
 
 ```js
-const expressExpeditiousInstance = expressExpeditious({
+const cache = expressExpeditious({
   defaultTtl: 30000,
   namespace: 'mycache',
 
@@ -193,84 +393,74 @@ const expressExpeditiousInstance = expressExpeditious({
     const resource = req.originalUrl;
     const method = req.method;
 
-    return `${method}-${resource}-${version}-${sessionId}`
+    return `${method}-${resource}-${version}-${sessionId}`;
   }
+});
+
+// this is similar to the default key generation in this middleware, but is
+// simply provided for the sake of an example here - there's no need to do this
+const versionlessCache = cache.withCacheKey((req, res) => {
+  const sessionId = req.session.id;
+  const resource = req.originalUrl;
+  const method = req.method;
+
+  return `${method}-${resource}-${sessionId}`;
 });
 ```
 
-### Status Code Variations (_statusCodeExpires_)
+### Status Code Variations (_statusCodeExpires_ or _withTtlForStatus_)
 
 #### Default
 The default behaviour for _express-expeditious_ is to cache responses that have
-a status code of 200. Other status codes mean the response is not cached.
+a status code of 200. All other status codes will not be cached.
 
 #### Custom
-To cache non 200 responses and have different cache TTL values for different
-status codes, simply add the _statusCodeExpires_ option, and specify the
-expiry/ttl value you would like to use for a particular status code in
-milliseconds. An example is provided below.
+To cache non 200 responses and have different cache timeout (ttl) values for
+different status codes, simply add the _statusCodeExpires_ option, and specify
+the ttl value you would like to use for a particular status code in
+milliseconds or as a `timestring` compatible value.
+
+An example is provided below:
 
 ```js
-const expressExpeditiousInstance = expressExpeditious({
-  defaultTtl: 30000,
+const cache = expressExpeditious({
+  defaultTtl: '1 hour',
   namespace: 'mycache',
 
-  // We want a 500 error to be cached for 30 seconds, and a 404 to be cached
-  // for 120 seconds. We also override the "defaultTtl" passed to expeditious
-  // for 200 requests and cache them for 2 minutes!
+  // 500 errors will be cached for 60 seconds, and 404s will be cached for 5
+  // minutes. 200 responses are cached for 1 hour due to defaultTtl
   statusCodeExpires: {
-    200: 120 * 1000,
-    404: 60 * 1000,
-    500: 30 * 1000
+    404: '5 minutes',
+    500: 60 * 1000 // 1 minute in milliseconds
   }
 });
+
+app.get('/users', (req, res) => {
+  res.json({
+    message: `You want a list of all users? We should implement that feature... `
+  });
+})
+
+app.get('/users/:id', cache.withTtlForStatus('10 minutes', 400), (req, res) => {
+  if (req.params.id.match(/^[0-9]+$/)) {
+    // This response will be cached for an 10 minutes due to being a 400 status
+    res.status(400).json({
+      message: 'Hmm, that ID is invalid., IDs should have numbers only.'
+    })
+  } else {
+    // This will be cached for an hour since it's a 200 response
+    res.json({
+      message: `You wanted user with ID ${req.params.id}. We should implement that feature... `
+    });
+  }
+})
 ```
 
 
 ## CHANGELOG
-
 [Click here](https://github.com/evanshortiss/express-expeditious/blob/master/CHANGELOG.md) to see the CHANGELOG.md file.
 
 
-## Redis Example
-
-This is very similar _Quickstart_ example with the only exception being we pass
-a custom expeditious instance that has an `engine` set to an instance of
-`expeditious-engine-redis`.
-
-```js
-// express middleware that will use an expeditious instance for caching
-const getExpeditiousCache = require('express-expeditious');
-const expeditious = require('expeditious');
-
-// need to pass some options for configuration purposes
-const cache = getExpeditiousCache({
-  expeditious: expeditious({
-    defaultTtl: 60000,
-    namespace: 'expressrediscache',
-    engine: require('expeditious-engine-redis')({
-      // options for the redis driver
-      host: 'redis.acme.com',
-      port: 6379
-    }),
-    objectMode: true
-  })
-});
-
-// Our express application
-const app = require('express')();
-
-function pingHandler (req, res) {
-  setTimeout(() => {
-    res.end('pong');
-  }, 2500);
-}
-
-// the initial call to this will take 2.5 seconds, but any subsequent calls
-// will receive a response instantaneously for the next 60 seconds thanks
-// to our expeditious cache
-app.get('/sometimes-slow-ping', cache, pingHandler);
-
-// no caching applied here so it will always take 2.5 seconds to respond
-app.get('/always-slow-ping', pingHandler);
-```
+## Contributing
+Contributions are welcome and encouraged. Ensure you add or remove tests as
+needed, and verify the build is passing for your Pull Request.

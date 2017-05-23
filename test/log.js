@@ -14,7 +14,7 @@ describe('log', function () {
     const logSpy = sinon.spy();
     logSpy.enabled = false;
 
-    const mod = proxyquire('../lib/log', {
+    const mod = proxyquire('lib/log', {
       'debug': sinon.stub().returns(logSpy)
     })(req);
 
@@ -27,7 +27,7 @@ describe('log', function () {
     const logSpy = sinon.spy();
     logSpy.enabled = true;
 
-    const mod = proxyquire('../lib/log', {
+    const mod = proxyquire('lib/log', {
       'debug': sinon.stub().returns(logSpy)
     })(req);
 

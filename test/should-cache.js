@@ -5,7 +5,7 @@ var expect = require('chai').expect
 
 describe('should-cache', function () {
 
-  var mod = require('../lib/should-cache')
+  var mod = require('lib/should-cache')
     , shouldCacheStub;
 
   beforeEach(function () {

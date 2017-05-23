@@ -1,8 +1,8 @@
 {
   "name": "express-expeditious",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "express caching middlware",
-  "main": "lib/cache.js",
+  "main": "lib/middleware.js",
   "files": [
     "lib/"
   ],
@@ -17,13 +17,14 @@
   "scripts": {
     "test": "npm run lint && npm run unit && npm run coverage && npm run check-coverage",
     "lint": "npm run eslint && npm run linelint",
-    "eslint": "eslint $(ls lib/*.js)",
-    "linelint": "linelint $(ls lib/*.js)",
-    "unit": "mocha test/",
-    "example": "node example/server.js",
-    "benchmark": "node --max-old-space-size=2048 --max-semi-space-size=512 --noconcurrent_sweeping benchmark/index.js",
+    "eslint": "eslint lib/*.js",
+    "linelint": "linelint ls lib/*.js",
+    "unit": "NODE_PATH=. mocha test/",
+    "example": "NODE_ENV=production node example/server.js",
+    "benchmark": "NODE_ENV=production node --max-old-space-size=2048 --max-semi-space-size=512 --noconcurrent_sweeping benchmark/index.js",
+    "benchmark-server": "NODE_ENV=production node --max-old-space-size=2048 --max-semi-space-size=512 --noconcurrent_sweeping benchmark/server.js",
     "coveralls": "npm run coverage && cat coverage/lcov.info | coveralls",
-    "coverage": "nyc mocha test/ && nyc report --reporter=lcov",
+    "coverage": "NODE_PATH=. nyc mocha test/ && nyc report --reporter=lcov",
     "check-coverage": "nyc check-coverage --statements 95 --branches 95 --lines 95 --functions 95"
   },
   "keywords": [
@@ -48,6 +49,7 @@
     "expeditious-engine-memory": "~0.2.0",
     "http-parser-js": "~0.4.4",
     "on-finished": "~2.3.0",
+    "timestring": "~4.0.0",
     "verror": "~1.8.1",
     "xtend": "~4.0.1"
   },
@@ -67,6 +69,7 @@
     "proxyquire": "~1.7.9",
     "pug": "~2.0.0-rc.1",
     "request": "~2.72.0",
+    "require-uncached": "~1.0.3",
     "sinon": "~1.17.4",
     "supertest": "~1.2.0"
   },

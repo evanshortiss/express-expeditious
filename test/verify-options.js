@@ -5,7 +5,7 @@ var expect = require('chai').expect
 
 describe('verify-options', function () {
 
-  const mod = require('../lib/verify-options');
+  const mod = require('lib/verify-options');
 
   it('should throw AssertionError - invalid opts.shouldCache', function () {
     const iomStub = sinon.stub().returns(true);

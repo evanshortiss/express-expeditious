@@ -8,7 +8,7 @@ describe('cache-locks', function () {
   var RESOURCE_NAME = 'reosurce-thingy';
 
   beforeEach(function () {
-    mod = require('../lib/cache-locks')();
+    mod = require('require-uncached')('lib/cache-locks');
   });
 
   it('should add a lock', function () {
@@ -19,7 +19,7 @@ describe('cache-locks', function () {
 
   it('should remove a lock', function () {
     mod.addLock(RESOURCE_NAME);
-    
+
     mod.removeLock(RESOURCE_NAME);
 
     expect(mod.isLocked(RESOURCE_NAME)).to.be.false;

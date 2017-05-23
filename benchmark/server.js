@@ -10,7 +10,7 @@ const join = require('path').join;
 const readFile = require('fs').readFile;
 const readFileSync = require('fs').readFileSync;
 
-const cache = require('../lib/cache')({
+const cache = require('../lib/middleware')({
   defaultTtl: 60000,
   namespace: 'cacher'
 });

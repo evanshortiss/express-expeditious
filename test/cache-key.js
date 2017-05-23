@@ -8,7 +8,7 @@ describe('cache-key', function () {
   var mod, genKeyStub, ORIGINAL_URL;
 
   beforeEach(function () {
-    mod = require('../lib/cache-key');
+    mod = require('lib/cache-key');
     genKeyStub = sinon.stub();
     ORIGINAL_URL = '/cars?make=vw';
   });
@@ -41,7 +41,7 @@ describe('cache-key', function () {
     ).to.equal('GET-' + ORIGINAL_URL);
   });
 
-  it('should create a key using default behaviour - no session', function () {
+  it('should create a key without a session token', function () {
     var instance = mod({});
 
     expect(
@@ -52,8 +52,10 @@ describe('cache-key', function () {
     ).to.equal('GET-' + ORIGINAL_URL);
   });
 
-  it('should create a key using default behaviour - session', function () {
-    var instance = mod({});
+  it('should create a key with a session due to opts.sessionAware = true', function () {
+    var instance = mod({
+      sessionAware: true
+    });
 
     expect(
       instance({
@@ -62,6 +64,20 @@ describe('cache-key', function () {
         session: {id: '12345'}
       })
     ).to.equal('GET-12345-' + ORIGINAL_URL);
+  });
+
+  it('should create a key and exclude the session due to opts.sessionAware = false', function () {
+    var instance = mod({
+      sessionAware: false
+    });
+
+    expect(
+      instance({
+        originalUrl: ORIGINAL_URL,
+        method: 'GET',
+        session: {id: '12345'}
+      })
+    ).to.equal('GET-' + ORIGINAL_URL);
   });
 
 });
