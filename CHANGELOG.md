@@ -2,7 +2,7 @@
 
 Dates are YYYY-MM-DD.
 
-## 3.1.0 / 2017-05-18
+## 3.1.0 / 2017-05-22
 * Restructure source code.
 * Minor performance improvements.
 * Add `sessionAware` option and `withSessionAwareness()` function to facilitate
@@ -39,4 +39,4 @@ to enable caching of non 200 responses.
 * 1.0.0 - Add ETag support.
 
 * <1.0.0 - Ye Olde Days. Expected objectMode to be "false" on expeditious
-instances. Did not support ETags. Was not `express-session` safe.
+instances. Did not support ETags. Was _not_ `express-session` safe.
