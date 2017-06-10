@@ -1,8 +1,10 @@
 'use strict';
 
-var supertest = require('supertest')
-  , expect = require('chai').expect
-  , sinon = require('sinon');
+const supertest = require('supertest');
+const expect = require('chai').expect;
+const sinon = require('sinon');
+const fs = require('fs');
+const path = require('path');
 
 describe('cache middleware', function () {
 
@@ -57,9 +59,12 @@ describe('cache middleware', function () {
     // cached based on the fact it might already be buffering the same response
     function onReq (req, res) {
       setTimeout(function () {
-        slowModuleStub(function (err) {
-          if (err) {
+        slowModuleStub(function (code) {
+          if (code === 500) {
             res.status(500).end('500 error');
+          } else if (code === 304) {
+            res.set('etag', 'ETAG');
+            res.status(304).end();
           } else {
             res.write('o', 'utf8');
 
@@ -84,7 +89,7 @@ describe('cache middleware', function () {
   it('should return data in the standard fashion', function (done) {
     engineStubs.get.yields(null, null);
     engineStubs.set.yields(null);
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
 
     request
@@ -110,7 +115,7 @@ describe('cache middleware', function () {
 
 
   it('should use cache for the second call', function (done) {
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
     engineStubs.set.yields(null);
     engineStubs.get.yields(null, null);
@@ -151,7 +156,7 @@ describe('cache middleware', function () {
 
 
   it('should not use the cache for any calls', function (done) {
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(false);
 
     function doRequest (callback) {
@@ -179,7 +184,7 @@ describe('cache middleware', function () {
   });
 
   it('should use default route if cache.get fails', function (done) {
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
     engineStubs.get.yields(new Error('failed to read cache'));
 
@@ -205,7 +210,7 @@ describe('cache middleware', function () {
   });
 
   it('should process request on cache.set error', function (done) {
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
     engineStubs.get.yields(null, null);
     engineStubs.set.yields(new Error('cache.set error'), null);
@@ -229,7 +234,7 @@ describe('cache middleware', function () {
   });
 
   it('should not call cache.set due to bad status code and no opts.statusCodeExpires being provided', function (done) {
-    slowModuleStub.yields(new Error('nope!'));
+    slowModuleStub.yields(500);
     shouldCacheStub.returns(true);
     engineStubs.get.yields(null, null);
 
@@ -253,7 +258,7 @@ describe('cache middleware', function () {
   });
 
   it('should only cache.set once on concurrent requests', function (done) {
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
     engineStubs.get.yields(null, null);
     engineStubs.set.yields(null, null);
@@ -283,11 +288,9 @@ describe('cache middleware', function () {
     });
   });
 
-  it('should respond with a 304', function (done) {
-    var fs = require('fs')
-      , path = require('path');
+  it('should respond with a 304 due to matching etag in second request', function (done) {
 
-    slowModuleStub.yields(null);
+    slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
     engineStubs.get.onCall(0).yields(null, null);
     engineStubs.set.yields(null, null);
@@ -311,6 +314,26 @@ describe('cache middleware', function () {
           .set('if-none-match', 'W/"c8-j36pDBD4000wLNnKKK96Dg"')
           .expect(304)
           .end(done);
+      });
+  });
+
+  it('should respond with a 304 and generate a 304 cache entry', (done) => {
+    slowModuleStub.yields(304);
+    shouldCacheStub.returns(true);
+    engineStubs.get.yields(null, null);
+
+    request
+      .get('/expecting-a-304')
+      .expect(304)
+      .end((err) => {
+        setTimeout(() => {
+          expect(err).to.be.null;
+          expect(engineStubs.set.calledOnce).to.be.true;
+          expect(engineStubs.set.getCall(0).args[0]).to.equal(
+            'expresstest:GET-/expecting-a-304-ETAG'
+          );
+          done();
+        }, 200);
       });
   });
 
