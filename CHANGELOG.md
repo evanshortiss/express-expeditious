@@ -2,6 +2,16 @@
 
 Dates are YYYY-MM-DD.
 
+## 3.1.1 / 2017-05-22
+* Fix bug where the `socket.write` callback was not fired.
+* Add unit test for `parse-http-response` code.
+* Fix bug where `x-expeditious-cache` could return `miss` when it should be a
+`hit`.
+* Fix bug where sever would respond with 304 to requests without `if-none-match`
+header in their payload. This manifested itself if the first incoming request
+after cache expiry resulted in a 304 and would cause clients that were new, and
+therefore needed a 200 with data, to receive a 304.
+
 ## 3.1.0 / 2017-05-22
 * Restructure source code.
 * Minor performance improvements.
