@@ -2,8 +2,9 @@
 
 Dates are YYYY-MM-DD.
 
-## 3.1.1 / 2017-05-22
-* Fix bug where the `socket.write` callback was not fired.
+## 3.1.1 / 2017-06-12
+* Fix bug where the `socket.write` callback was not fired. This affected certain
+cases such as `res.render`.
 * Add unit test for `parse-http-response` code.
 * Fix bug where `x-expeditious-cache` could return `miss` when it should be a
 `hit`.
