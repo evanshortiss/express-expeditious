@@ -36,7 +36,7 @@ describe('verify-options', function () {
   it('should throw AssertionError - "namespace" required if opts.expeditious not provided', function () {
     expect(function() {
       mod({
-        defaultTtl: 6000
+        defaultTtl: '1 hour'
       });
     }).to.throw('opts.namespace must be a non-empty string');
   });
@@ -47,6 +47,15 @@ describe('verify-options', function () {
         namespace: 'tester'
       });
     }).to.throw('opts.defaultTtl must be a number');
+  });
+
+  it('should throw AssertionError - "defaultTtl" should be a string or number', function () {
+    expect(function() {
+      mod({
+        namespace: 'tester',
+        defaultTtl: {}
+      });
+    }).to.throw('opts.defaultTtl must be a number of milliseconds or a timestring');
   });
 
   it('should throw AssertionError - "statusCodeExpires" should be an object', () => {
