@@ -2,6 +2,9 @@
 
 Dates are YYYY-MM-DD.
 
+## 3.1.2 / 2017-06-30
+* Fix a bug where `timestring` values passed in `opts.defaultTtl` were ignored.
+
 ## 3.1.1 / 2017-06-12
 * Fix bug where the `socket.write` callback was not fired. This affected certain
 cases such as `res.render`.
