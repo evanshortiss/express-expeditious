@@ -62,7 +62,7 @@ These examples will cache any successful request - this is a request that you
 send a 200 status code to the client.
 
 
-### Using the In-Memory Cache
+### Using the Default In-Memory Cache
 ```js
 const getExpeditiousCache = require('express-expeditious');
 const express = require('express');
@@ -89,7 +89,7 @@ app.get('/ping', cache.withTtl('1 hour'), (req, res) => {
 app.use(cache);
 ```
 
-## Using with TypeScript
+### Using the Default In-Memory Cache with TypeScript
 Similar to the regular JavaScript example:
 
 ```ts
