@@ -1,12 +1,13 @@
 express-expeditious
 ===================
 ![https://travis-ci.org/evanshortiss/express-expeditious](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious) [![https://coveralls.io/repos/github/evanshortiss/express-expeditious](https://coveralls.io/repos/github/evanshortiss/express-expeditious/badge.svg?branch=master)](https://coveralls.io/github/evanshortiss/express-expeditious?branch=master)
+[![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.png?v=101)](https://github.com/ellerbrock/typescript-badges/)
 
 An express middleware that simplifies caching responses for HTTP requests of any
 type. It also handles many unique cases such as piping data, using sessions, and
 ETags. This middleware is implemented at the socket level, so it is entirely
 transparent to the response methods such as `res.json`, `res.end`, etc. and
-stays out of your way as a result.
+stays out of your way as a result. TypeScript support is also included.
 
 
 ## How Does it Work?
@@ -22,6 +23,7 @@ was a HTTP 200 (success).
 
 ## Features
 
+* Support for TypeScript.
 * Seamlessly caches responses without the need to modify route handler code.
 * Caches all response functions and data types, e.g `res.json`, `res.sendFile`,
 `res.pipe`, etc.
@@ -60,7 +62,7 @@ These examples will cache any successful request - this is a request that you
 send a 200 status code to the client.
 
 
-### Using the In-Memory Cache
+### Using the Default In-Memory Cache
 ```js
 const getExpeditiousCache = require('express-expeditious');
 const express = require('express');
@@ -75,7 +77,7 @@ const cache = getExpeditiousCache({
 
 const app = express();
 
-// the initial call to this will take 2.5 seconds, but any subsequent calls
+// the initial call to this will take 2 seconds, but any subsequent calls
 // will receive a response instantly from cache for the next hour
 app.get('/ping', cache.withTtl('1 hour'), (req, res) => {
   setTimeout(() => {
@@ -86,6 +88,33 @@ app.get('/ping', cache.withTtl('1 hour'), (req, res) => {
 // Cache everything below this line for 1 minute (defaultTtl)
 app.use(cache);
 ```
+
+### Using the Default In-Memory Cache with TypeScript
+Similar to the regular JavaScript example:
+
+```ts
+import * as expeditious from 'express-expeditious';
+import * as express from 'express';
+
+const cacheoptions: expeditious.ExpeditiousOptions = {
+  namespace: 'expresscache',
+  defaultTtl: '1 minute'
+};
+
+const cache = expeditious(cacheoptions);
+
+const app = express();
+
+// the initial call to this will take 2 seconds, but any subsequent calls
+// will receive a response instantly from cache for the next hour
+app.get('/ping', cache.withTtl('1 hour'), (req, res) => {
+  setTimeout(() => {
+    res.end('pong');
+  }, 2000);
+});
+```
+
+There's also a TypeScript sample folder in this repo at `/example-ts`.
 
 
 ### Using Redis

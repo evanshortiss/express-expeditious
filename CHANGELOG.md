@@ -2,6 +2,10 @@
 
 Dates are YYYY-MM-DD.
 
+## 3.2.0 / 2017-07-06
+* TypeScript support added via type definitions file.
+* New example provided that uses TypeScript.
+
 ## 3.1.2 / 2017-06-30
 * Fix a bug where `timestring` values passed in `opts.defaultTtl` were ignored.
 
