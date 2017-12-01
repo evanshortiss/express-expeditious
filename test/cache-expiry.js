@@ -19,7 +19,7 @@ describe('cache-expiry', function () {
       }
     });
 
-    var ret = instance('404');
+    var ret = instance(404);
 
     expect(ret).to.equal(1500);
   });
@@ -33,7 +33,34 @@ describe('cache-expiry', function () {
         }
       });
 
-      expect(instance('500')).to.equal(0);
+      expect(instance(500)).to.equal(0);
+    }
+  );
+
+  it(
+    'should return the defaultTtl using the given expeditious instance',
+    function () {
+      var instance = mod({
+        expeditious: {
+          getDefaultTtl: getDefaultTtlStub
+        }
+      });
+
+      getDefaultTtlStub.returns(60000)
+
+      expect(instance(200)).to.equal(60000);
+      expect(getDefaultTtlStub.called).to.equal(true)
+    }
+  );
+
+  it(
+    'should return the defaultTtl from config',
+    function () {
+      var instance = mod({
+        defaultTtl: 30000
+      });
+
+      expect(instance(200)).to.equal(30000);
     }
   );
 
@@ -42,7 +69,7 @@ describe('cache-expiry', function () {
     function () {
       var instance = mod({
         statusCodeExpires: {
-          '503': 100
+          503: 100
         },
         expeditious: {
           getDefaultTtl: getDefaultTtlStub
