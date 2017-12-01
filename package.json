@@ -1,6 +1,6 @@
 {
   "name": "express-expeditious",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "express caching middlware",
   "main": "lib/middleware.js",
   "files": [
@@ -18,8 +18,7 @@
   "homepage": "https://github.com/evanshortiss/express-expeditious",
   "scripts": {
     "test": "npm run lint && npm run unit && npm run coverage && npm run check-coverage",
-    "lint": "npm run eslint && npm run linelint",
-    "eslint": "eslint lib/*.js",
+    "lint": "standard lib/*.js example/*.js benchmark/*.js --fix && npm run linelint",
     "linelint": "linelint ls lib/*.js",
     "unit": "NODE_PATH=. mocha test/",
     "example": "NODE_ENV=production node example/server.js",
@@ -28,7 +27,7 @@
     "benchmark-server": "NODE_ENV=production node --max-old-space-size=2048 --max-semi-space-size=512 --noconcurrent_sweeping benchmark/server.js",
     "coveralls": "npm run coverage && cat coverage/lcov.info | coveralls",
     "coverage": "NODE_PATH=. nyc mocha test/ && nyc report --reporter=lcov",
-    "check-coverage": "nyc check-coverage --statements 95 --branches 95 --lines 95 --functions 95"
+    "check-coverage": "nyc check-coverage --statements 94 --branches 94 --lines 94 --functions 94"
   },
   "keywords": [
     "expeditious",
@@ -50,13 +49,12 @@
   "license": "MIT",
   "dependencies": {
     "debug": "~2.2.0",
-    "expeditious": "~0.1.0",
+    "expeditious": "~1.0.1",
     "expeditious-engine-memory": "~0.2.0",
     "http-parser-js": "~0.4.4",
     "on-finished": "~2.3.0",
     "timestring": "~4.0.0",
-    "verror": "~1.8.1",
-    "xtend": "~4.0.1"
+    "verror": "~1.8.1"
   },
   "devDependencies": {
     "@types/express": "~4.0.36",
@@ -77,6 +75,7 @@
     "request": "~2.72.0",
     "require-uncached": "~1.0.3",
     "sinon": "~1.17.4",
+    "standard": "~10.0.3",
     "supertest": "~3.0.0",
     "typescript": "~2.4.1"
   },

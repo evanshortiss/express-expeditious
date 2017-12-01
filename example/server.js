@@ -1,8 +1,7 @@
-'use strict';
+'use strict'
 
-const fs = require('fs');
-const join = require('path').join;
-const request = require('request');
+const join = require('path').join
+const request = require('request')
 
 // express middleware that will use an expeditious instance for caching
 const cache = require('../lib/middleware')({
@@ -14,27 +13,27 @@ const cache = require('../lib/middleware')({
   statusCodeExpires: {
     404: 90000
   }
-});
+})
 
 // Our express application
-const app = require('express')();
+const app = require('express')()
 
 function delay (timeout) {
   return (req, res, next) => {
     setTimeout(() => {
-      next();
-    }, timeout || 2000);
-  };
+      next()
+    }, timeout || 2000)
+  }
 }
 
 // configure view engine
-app.set('views', join(__dirname, './views'));
-app.set('view engine', 'pug');
+app.set('views', join(__dirname, './views'))
+app.set('view engine', 'pug')
 
 // render the home page
 app.get('/', cache, delay(), (req, res) => {
-  res.render('index');
-});
+  res.render('index')
+})
 
 // Simple endpoint that renders a "pong" page after a small delay
 app.get(
@@ -44,21 +43,21 @@ app.get(
   (req, res) => {
     res.render('pong', {
       url: req.originalUrl
-    });
+    })
   }
-);
+)
 
 // Try calling this via curl http://localhost:8080/pipe?noCache=true a few
 // times. Notice that it's not cached? Now try http://localhost:8080/pipe
 // and you'll see it responds instantly after the first call
 app.get(
   '/pipe',
-  cache.withCondition((req) => !req.query.noCache ).withTtl('1 hour'),
+  cache.withCondition((req) => !req.query.noCache).withTtl('1 hour'),
   delay(),
   (req, res) => {
-    request.get('http://www.facebook.com').pipe(res);
+    request.get('http://www.facebook.com').pipe(res)
   }
-);
+)
 
 // Demonstrates using res.sendFile
 app.get(
@@ -66,9 +65,9 @@ app.get(
   cache,
   delay(),
   (req, res) => {
-    res.sendFile(join(__dirname, 'server.js'));
+    res.sendFile(join(__dirname, 'server.js'))
   }
-);
+)
 
 // Demonstrates using res.write to send chunks of data to a user
 app.get(
@@ -76,29 +75,29 @@ app.get(
   cache,
   delay(),
   (req, res) => {
-    res.write('1');
-    res.write('2-2');
-    res.write('3-3-3');
-    res.end();
+    res.write('1')
+    res.write('2-2')
+    res.write('3-3-3')
+    res.end()
   }
-);
+)
 
 // facilitates flushing of caches
 app.get('/flush-cache', (req, res) => {
   cache.expeditious.flush(null, () => {
-    res.end('cache flushed');
-  });
-});
+    res.end('cache flushed')
+  })
+})
 
 // 404 page, also has a deliberate delay
 app.use(cache, delay(), (req, res) => {
-  res.status(404).render('not-found');
-});
+  res.status(404).render('not-found')
+})
 
 app.listen(8080, (err) => {
   if (err) {
-    throw err;
+    throw err
   } else {
-    console.log('express-expeditious example server running at http://localhost:8080');
+    console.log('express-expeditious example server running at http://localhost:8080')
   }
-});
+})

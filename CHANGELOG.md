@@ -2,6 +2,11 @@
 
 Dates are YYYY-MM-DD.
 
+## 3.2.1 / 2017-07-06
+* Update to use expeditious@1.0.1 internally.
+* Use `standard` module for linting.
+* Remove use of `xtend` in facour of `Object.assign`
+
 ## 3.2.0 / 2017-07-06
 * TypeScript support added via type definitions file.
 * New example provided that uses TypeScript.
