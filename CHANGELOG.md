@@ -5,7 +5,8 @@ Dates are YYYY-MM-DD.
 ## 3.2.1 / 2017-07-06
 * Update to use expeditious@1.0.1 internally.
 * Use `standard` module for linting.
-* Remove use of `xtend` in facour of `Object.assign`
+* Remove use of `xtend` in facour of `Object.assign`.
+* Fix cache expiry time decision logic adn increase coverage.
 
 ## 3.2.0 / 2017-07-06
 * TypeScript support added via type definitions file.
