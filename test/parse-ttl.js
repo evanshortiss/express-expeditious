@@ -22,7 +22,7 @@ describe('parse-ttl', function () {
   it('should throw an AssertionError', () => {
     expect(function () {
       parseTtl('garbage input');
-    }).to.throw('AssertionError');
+    }).to.throw(require('assert').AssertionError, 'could not parse');
   });
 
 });
