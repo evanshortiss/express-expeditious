@@ -49,12 +49,12 @@
   "author": "Evan Shortiss",
   "license": "MIT",
   "dependencies": {
-    "debug": "~2.2.0",
+    "debug": "~3.1.0",
     "expeditious": "~1.0.1",
     "expeditious-engine-memory": "~0.2.0",
     "http-parser-js": "~0.4.4",
     "on-finished": "~2.3.0",
-    "timestring": "~4.0.0",
+    "timestring": "~5.0.0",
     "verror": "~1.10.0"
   },
   "devDependencies": {
