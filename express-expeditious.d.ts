@@ -29,7 +29,7 @@ declare namespace ExpressExpeditious {
    * Function that can be used to generate a custom caching key for an incoming request. This key will be used to read
    * and write from the cache
    */
-  type GenreateCacheKeyFunction = (req: express.Request) => string
+  type GenreateCacheKeyFunction = (req: express.Request, res: express.Response) => string
 
   /**
    * Options that must be passed to the factory function of express-expeditious
