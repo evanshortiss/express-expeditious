@@ -416,12 +416,13 @@ const cache = expressExpeditious({
   namespace: 'mycache',
 
   // cache key is based on a session id, api version, method, and url
-  genCacheKey: function (req) {
+  genCacheKey: function (req, res) {
     const sessionId = req.session.id;
     const version = req.headers['x-api-version'];
     const resource = req.originalUrl;
     const method = req.method;
 
+    // Could also use res to access etag etc.
     return `${method}-${resource}-${version}-${sessionId}`;
   }
 });
