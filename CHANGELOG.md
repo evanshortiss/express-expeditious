@@ -2,6 +2,9 @@
 
 Dates are YYYY-MM-DD.
 
+## 3.3.0 / 2017-04-02
+* Update signature of `genCacheKey(req)` to `genCacheKey(req, res)`
+
 ## 3.2.1 / 2017-12-01
 * Update to use expeditious@1.0.1 internally.
 * Use `standard` module for linting.
