@@ -289,20 +289,14 @@ describe('cache middleware', function () {
   });
 
   it('should respond with a 304 due to matching etag in second request', function (done) {
-
     slowModuleStub.yields(200);
     shouldCacheStub.returns(true);
     engineStubs.get.onCall(0).yields(null, null);
     engineStubs.set.yields(null, null);
 
     engineStubs.get.onCall(1).yields(null, JSON.stringify({
-      headers: {
-        ETag: 'W/"c8-j36pDBD4000wLNnKKK96Dg"'
-      },
-      body: fs.readFileSync(
-        path.join(__dirname, './sample-http-response.txt'),
-        'utf8'
-      ).replace(/\n/g, '\r')
+      headers: 'HTTP/1.1 200 Not Modified\r\nX-Powered-By: Express\r\nx-expeditious-cache: hit\r\nETag: W/"11a-5VdvADh/zRWypLIWVzof8gO9s3U"',
+      data: JSON.stringify(new Buffer('\r\n Hello World'))
     }));
 
     request
@@ -311,7 +305,7 @@ describe('cache middleware', function () {
       .end(function () {
         request
           .get('/expecting-a-304')
-          .set('if-none-match', 'W/"c8-j36pDBD4000wLNnKKK96Dg"')
+          .set('if-none-match', 'W/"11a-5VdvADh/zRWypLIWVzof8gO9s3U"')
           .expect(304)
           .end(done);
       });
