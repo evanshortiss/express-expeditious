@@ -153,7 +153,7 @@ Currently cached data is stored in the following format:
 {
   headers: String
   data: {
-    type: Buffer,
+    type: 'Buffer',
     data: Uint8Array
   }
 }
