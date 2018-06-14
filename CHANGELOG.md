@@ -2,6 +2,11 @@
 
 Dates are YYYY-MM-DD.
 
+## 4.0.0 / 2018-06-14
+* Fix issues related to caching binary and compressed responses.
+* Cached body is now stored as a Buffer
+* Headers are stored as a string
+
 ## 3.3.0 / 2017-04-02
 * Update signature of `genCacheKey(req)` to `genCacheKey(req, res)`
 
