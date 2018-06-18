@@ -15,6 +15,10 @@ const cache = require('../lib/middleware')({
   }
 })
 
+const compress = require('compression')({
+  threshold: 2 // anything larger than 2 bytes is compressed
+})
+
 // Our express application
 const app = require('express')()
 
@@ -81,6 +85,17 @@ app.get(
     res.end()
   }
 )
+
+// Example of compressed responses being cached
+app.get('/compressed', compress, cache, (req, res) => {
+  res.json({
+    0: 'hello',
+    1: 'hello',
+    2: 'hello',
+    3: 'hello',
+    4: 'hello'
+  })
+})
 
 // facilitates flushing of caches
 app.get('/flush-cache', (req, res) => {

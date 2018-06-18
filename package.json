@@ -1,6 +1,6 @@
 {
   "name": "express-expeditious",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "express caching middlware",
   "main": "lib/middleware.js",
   "files": [
@@ -52,7 +52,6 @@
     "debug": "~3.1.0",
     "expeditious": "~1.0.1",
     "expeditious-engine-memory": "~0.2.0",
-    "http-parser-js": "~0.4.4",
     "on-finished": "~2.3.0",
     "timestring": "~5.0.0",
     "verror": "~1.10.0"
@@ -63,6 +62,7 @@
     "benchmark": "~2.1.4",
     "bluebird": "~3.5.0",
     "chai": "~4.1.2",
+    "compression": "~1.7.2",
     "coveralls": "~3.0.0",
     "eslint": "~4.19.1",
     "express": "~4.16.3",

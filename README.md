@@ -1,7 +1,7 @@
 express-expeditious
 ===================
 ![https://travis-ci.org/evanshortiss/express-expeditious](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious) [![https://coveralls.io/repos/github/evanshortiss/express-expeditious](https://coveralls.io/repos/github/evanshortiss/express-expeditious/badge.svg?branch=master)](https://coveralls.io/github/evanshortiss/express-expeditious?branch=master)
-[![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.png?v=101)](https://github.com/ellerbrock/typescript-badges/)
+[![TypeScript](https://badges.frapsoft.com/typescript/version/typescript-next.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
 
 An express middleware that simplifies caching responses for HTTP requests of any
 type. It also handles many unique cases such as piping data, using sessions, and
@@ -51,8 +51,8 @@ npm install express-expeditious --save
 
 You can also install one of these to customise the cache storage location:
 
-* expeditious-engine-redis (this is the default)
-* expeditious-engine-memory
+* expeditious-engine-redis
+* expeditious-engine-memory (this is the default)
 
 If you'd like to write an engine of your own for another storage system then take a look at the source
 code for those modules - it's pretty easy and there's more information [here](https://github.com/evanshortiss/expeditious#custom-engines).
@@ -144,6 +144,59 @@ app.get('/ping', (req, res) => {
   }, 2000);
 });
 ```
+
+### Cache Storage Format
+Currently cached data is stored in the following format:
+
+```js
+
+{
+  headers: String
+  data: {
+    type: 'Buffer',
+    data: Uint8Array
+  }
+}
+```
+
+For example, here's a cache entry that would be stored by the module:
+
+```js
+{
+  "headers": "HTTP/1.1 200 OK\r\nX-Powered-By: Express\r\nx-expeditious-cache: hit\r\nDate: Thu, 14 Jun 2018 16:16:33 GMT\r\nConnection: close\r\nTransfer-Encoding: chunked",
+  "data": {
+    "type": "Buffer",
+    "data": [
+      13,
+      10,
+      13,
+      10,
+      49,
+      13,
+      10,
+      111,
+      13,
+      10,
+      49,
+      13,
+      10,
+      107,
+      13,
+      10,
+      48,
+      13,
+      10,
+      13,
+      10
+    ]
+  }
+}
+```
+
+This format could be changed to improve the ability to query for specific
+headers or data. The use of Buffers is to ensure binary/compressed data can be
+cached, but PRs and ideas surrounding this are welcome. For example, we could
+store non-binary data as strings to simplify the ability to query it.
 
 ### Using Modifers
 You can modify cache behaviour for specific endpoint or routers easily like so:
