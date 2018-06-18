@@ -2,7 +2,7 @@
 
 Dates are YYYY-MM-DD.
 
-## 4.0.0 / 2018-06-14
+## 4.0.0 / 2018-06-18
 * Fix issues related to caching binary and compressed responses.
 * Cached body is now stored as a Buffer
 * Headers are stored as a string
