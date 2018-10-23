@@ -1,7 +1,7 @@
 express-expeditious
 ===================
 ![https://travis-ci.org/evanshortiss/express-expeditious](https://travis-ci.org/evanshortiss/express-expeditious.svg) [![npm version](https://badge.fury.io/js/express-expeditious.svg)](https://badge.fury.io/js/express-expeditious) [![https://coveralls.io/repos/github/evanshortiss/express-expeditious](https://coveralls.io/repos/github/evanshortiss/express-expeditious/badge.svg?branch=master)](https://coveralls.io/github/evanshortiss/express-expeditious?branch=master)
-[![TypeScript](https://badges.frapsoft.com/typescript/version/typescript-next.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
+[![TypeScript](https://badges.frapsoft.com/typescript/version/typescript-next.svg?v=101)](https://github.com/ellerbrock/typescript-badges/) [![Greenkeeper badge](https://badges.greenkeeper.io/evanshortiss/express-expeditious.svg)](https://greenkeeper.io/)
 
 An express middleware that simplifies caching responses for HTTP requests of any
 type. It also handles many unique cases such as piping data, using sessions, and
