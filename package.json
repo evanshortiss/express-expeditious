@@ -1,6 +1,6 @@
 {
   "name": "express-expeditious",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "express caching middlware",
   "main": "lib/middleware.js",
   "files": [
@@ -81,6 +81,6 @@
     "typescript": "~2.8.1"
   },
   "engines": {
-    "node": ">=4.4.2"
+    "node": ">=6"
   }
 }
