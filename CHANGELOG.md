@@ -4,6 +4,7 @@ Dates are YYYY-MM-DD.
 
 ## 5.0.0 / 2018-11-27
 * Drop support for Node.js versions less than 6.x
+* Enable Greenkeeper and update dependencies
 
 ## 4.0.0 / 2018-06-18
 * Fix issues related to caching binary and compressed responses.
