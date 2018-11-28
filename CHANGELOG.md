@@ -2,6 +2,14 @@
 
 Dates are YYYY-MM-DD.
 
+## 5.0.0 / 2018-11-27
+* Drop support for Node.js versions less than 6.x
+
+## 4.0.0 / 2018-06-18
+* Fix issues related to caching binary and compressed responses.
+* Cached body is now stored as a Buffer
+* Headers are stored as a string
+
 ## 4.0.0 / 2018-06-18
 * Fix issues related to caching binary and compressed responses.
 * Cached body is now stored as a Buffer
