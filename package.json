@@ -64,7 +64,7 @@
     "chai": "~4.2.0",
     "compression": "~1.7.2",
     "coveralls": "~3.0.0",
-    "eslint": "~5.9.0",
+    "eslint": "~5.14.0",
     "express": "~4.16.3",
     "linelint": "~1.0.0",
     "mocha": "~5.2.0",
