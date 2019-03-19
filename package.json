@@ -75,7 +75,7 @@
     "pug": "~2.0.0-rc.1",
     "request": "~2.88.0",
     "require-uncached": "~2.0.0",
-    "sinon": "~7.1.1",
+    "sinon": "~7.2.4",
     "standard": "~12.0.1",
     "supertest": "~3.3.0",
     "typescript": "~3.1.6"
