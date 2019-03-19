@@ -67,7 +67,7 @@
     "eslint": "~5.14.0",
     "express": "~4.16.3",
     "linelint": "~1.0.0",
-    "mocha": "~5.2.0",
+    "mocha": "~6.0.0",
     "mocha-lcov-reporter": "~1.3.0",
     "mongodb": "~3.1.10",
     "nyc": "~13.1.0",
