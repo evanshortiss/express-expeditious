@@ -53,7 +53,7 @@
     "expeditious": "~1.0.1",
     "expeditious-engine-memory": "~0.2.0",
     "on-finished": "~2.3.0",
-    "timestring": "~5.0.0",
+    "timestring": "~6.0.0",
     "verror": "~1.10.0"
   },
   "devDependencies": {
