@@ -360,7 +360,7 @@ describe('cache middleware', function () {
         {
           defaultTtl: 5000,
           namespace: 'expresstest',
-          exposeHeader: false
+          cacheStatusHeader: false
         }
       )
     );
@@ -389,7 +389,7 @@ describe('cache middleware', function () {
         {
           defaultTtl: 5000,
           namespace: 'expresstest',
-          exposeHeader: 'X-Cool-Cached'
+          cacheStatusHeader: 'X-Cool-Cached'
         }
       )
     );
