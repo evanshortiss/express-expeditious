@@ -39,6 +39,7 @@ declare namespace ExpressExpeditious {
     namespace: string
     engine?: any
     sessionAware?: boolean
+    exposeHeader?: boolean
 
     genCacheKey?: GenreateCacheKeyFunction
     shouldCache?: ShouldCacheFunction
