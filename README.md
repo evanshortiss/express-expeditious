@@ -338,6 +338,7 @@ then this option is ignored.
 from the cache. By default _req.originalUrl_ is used as the key.
 * [Optional] statusCodeExpires - Useful if you want different status code responses to be cached for different
 durations.
+* [Optional] exposeHeader - Set false if you prefer not to write the expeditious response header (`x-expeditious-cache`)
 * [Required/Optional] defaultTtl - This is required if the `expeditious` option is not passed. Represents time entries
 will remain in the cache. Can be set to any value the `timestring` module accepts.
 * [Required/Optional] namespace - This is required if the `expeditious` option is not passed. It's used as a namespace
