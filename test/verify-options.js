@@ -68,6 +68,16 @@ describe('verify-options', function () {
     }).to.throw('opts.statusCodeExpires should be an object');
   });
 
+  it('should throw AssertionError - "exposeHeader" should be a boolean', () => {
+    expect(function () {
+      mod({
+        defaultTtl: 30000,
+        namespace: 'testing',
+        exposeHeader: 'asdasdasd'
+      });
+    }).to.throw('opts.exposeHeader should be a boolean');
+  });
+
   it('should pass verification', function () {
     var iomStub = sinon.stub();
 
