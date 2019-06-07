@@ -14,7 +14,7 @@ const suite = new Benchmark.Suite({
 })
 
 // opts passed for each test to benchmarkjs
-const opts = { defer: true }
+const opts = {defer: true}
 
 // These will randomly be used to query the server
 const continents = [
@@ -31,7 +31,7 @@ const continents = [
 function genTestFn (route) {
   return (deffered) => {
     const url = `http://localhost:8080${route}/${continents[util.getRandomInt(0, continents.length)]}`
-    request.get({ url: url }, (err, res) => {
+    request.get({url: url}, (err, res) => {
       if (err) {
         throw err
       } else if (res && res.statusCode !== 200) {

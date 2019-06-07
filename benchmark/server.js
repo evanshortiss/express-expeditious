@@ -26,7 +26,7 @@ module.exports = (function () {
   return db.then((collection) => {
     return collection.remove({})
       .then(() => collection.insert(countries))
-      .then(() => collection.ensureIndex({ ContinentName: 1 }))
+      .then(() => collection.ensureIndex({ContinentName: 1}))
       .then(() => startApp(collection))
   })
 })()
@@ -86,7 +86,7 @@ function startApp (collection) {
 
   function weatherHandler (req, res, next) {
     getContinents(req)
-      .then((countries) => Promise.map(countries, attachWeather, { concurrency: 10 }))
+      .then((countries) => Promise.map(countries, attachWeather, {concurrency: 10}))
       .then((data) => res.json(data))
       .catch(next)
   }
