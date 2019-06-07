@@ -68,14 +68,22 @@ describe('verify-options', function () {
     }).to.throw('opts.statusCodeExpires should be an object');
   });
 
-  it('should throw AssertionError - "exposeHeader" should be a boolean', () => {
+  it('should throw AssertionError - "exposeHeader" should be a boolean or string', () => {
     expect(function () {
       mod({
         defaultTtl: 30000,
         namespace: 'testing',
-        exposeHeader: 'asdasdasd'
+        exposeHeader: {}
       });
-    }).to.throw('opts.exposeHeader should be a boolean');
+    }).to.throw('opts.exposeHeader should be a boolean or string if provided');
+
+    expect(function () {
+      mod({
+        defaultTtl: 30000,
+        namespace: 'testing',
+        exposeHeader: function () {}
+      });
+    }).to.throw('opts.exposeHeader should be a boolean or string if provided');
   });
 
   it('should pass verification', function () {

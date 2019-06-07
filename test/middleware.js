@@ -348,7 +348,7 @@ describe('cache middleware', function () {
     });
   });
 
-  it('should not expose headers', done => {
+  it('should not expose header', done => {
     app = require('express')();
 
     // Create an instance
@@ -373,6 +373,35 @@ describe('cache middleware', function () {
       .get('/test')
       .end((_err, res) => {
         expect(res.headers['x-expeditious-cache']).to.be.undefined
+        done()
+      });
+  })
+
+  it('should expose custom header', done => {
+    app = require('express')();
+
+    // Create an instance
+    mod = require('lib/middleware');
+
+    // Add our cache to the express app
+    app.use(
+      mod(
+        {
+          defaultTtl: 5000,
+          namespace: 'expresstest',
+          exposeHeader: 'X-Cool-Cached'
+        }
+      )
+    );
+
+    app.get('/*', (req, res) => {
+      res.json({})
+    });
+
+    supertest(app)
+      .get('/test')
+      .end((_err, res) => {
+        expect(res.headers['x-cool-cached']).to.equal('miss')
         done()
       });
   })
