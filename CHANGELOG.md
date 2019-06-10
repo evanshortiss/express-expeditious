@@ -2,7 +2,9 @@
 
 Dates are YYYY-MM-DD.
 
-## 5.0.1 / 2019-05-10
+## 5.1.0 / 2019-05-10
+* Add `cacheStatusHeader` option to rename or disable `x-expeditious-cache'`
+headers
 * Fix issue `res.socket` was `undefined` when attempting to write
 * Update dependencies and devDependencies for bug/security fixes
 
