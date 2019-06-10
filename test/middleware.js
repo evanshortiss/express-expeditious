@@ -348,8 +348,13 @@ describe('cache middleware', function () {
   });
 
   it('should wait for a socket', (done) => {
+    // This test mocks out a request flow. We need to simulate a request that
+    // doesn't have a response socket bound (not sure how this can happen) but
+    // appears to be possible based on issue #28
+
+    engineStubs.get.yields(null, null);
+
     const mw = mod({
-      shouldCache: shouldCacheStub,
       defaultTtl: 5000,
       namespace: 'expresstest',
       engine: engineStubs
@@ -357,12 +362,18 @@ describe('cache middleware', function () {
 
     const req = {
       headers: {},
-      url: '/test/socket-event'
+      originalUrl: '/test/socket-event',
+      url: '/socket-event',
+      method: 'GET'
     }
 
     const res = new EventEmitter()
 
+    res.set = sinon.stub()
+
     res.write = function () {
+      expect(engineStubs.get.calledOnce).to.be.true;
+      expect(res.set.calledOnce).to.be.true;
       done()
     }
 
@@ -370,9 +381,17 @@ describe('cache middleware', function () {
       res.write(data)
     }
 
-    mw(req, res, () => {
-      res.end('all good')
-    })
+    // Trigger the socket bind event so it occurs shortly
+    // after the middleware has configured our request
+    setTimeout(() => {
+      res.socket = {
+        write: sinon.stub()
+      }
+
+      res.emit('socket')
+    }, 100)
+
+    mw(req, res, () => res.end('all good'))
   })
 
 });
