@@ -68,6 +68,24 @@ describe('verify-options', function () {
     }).to.throw('opts.statusCodeExpires should be an object');
   });
 
+  it('should throw AssertionError - "cacheStatusHeader" should be a boolean or string', () => {
+    expect(function () {
+      mod({
+        defaultTtl: 30000,
+        namespace: 'testing',
+        cacheStatusHeader: {}
+      });
+    }).to.throw('opts.cacheStatusHeader should be a boolean or string if provided');
+
+    expect(function () {
+      mod({
+        defaultTtl: 30000,
+        namespace: 'testing',
+        cacheStatusHeader: function () {}
+      });
+    }).to.throw('opts.cacheStatusHeader should be a boolean or string if provided');
+  });
+
   it('should pass verification', function () {
     var iomStub = sinon.stub();
 
