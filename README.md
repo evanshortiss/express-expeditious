@@ -458,7 +458,6 @@ And here's one not using `express-session`:
 GET-/cached
 ```
 
-
 #### Custom
 You can define custom a custom key for incoming requests by providing a
 _genCacheKey_ option when creating _express-expeditious_ instances.
@@ -492,6 +491,36 @@ const versionlessCache = cache.withCacheKey((req, res) => {
   return `${method}-${resource}-${sessionId}`;
 });
 ```
+
+### Hit/Miss Header (_cacheStatusHeader_)
+
+#### Default
+An `x-expeditious-cache` header is returned in each response with the value of
+`hit` or `miss` to indicate if the request was served by the cache.
+
+#### Custom
+Passing the `cacheStatusHeader` option can change the name of the header from
+`x-expeditious-cache` to a value of your choosing by passing a string. You can
+also pass the boolean value `false` to disable the header entirely.
+
+```js
+const cache = expressExpeditious({
+  defaultTtl: '1 hour',
+  namespace: 'mycache',
+
+  // Disable sending the header
+  cacheStatusHeader: false
+})
+
+const cache = expressExpeditious({
+  defaultTtl: '1 minute',
+  namespace: 'my-other-cache',
+
+  // Change the header name
+  cacheStatusHeader: 'x-cache-status'
+})
+```
+
 
 ### Status Code Variations (_statusCodeExpires_ or _withTtlForStatus_)
 
