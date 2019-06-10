@@ -3,8 +3,7 @@
 const supertest = require('supertest');
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const fs = require('fs');
-const path = require('path');
+const EventEmitter = require('events')
 
 describe('cache middleware', function () {
 
@@ -347,6 +346,53 @@ describe('cache middleware', function () {
       namespace: 'expresscache'
     });
   });
+
+  it('should wait for a socket', (done) => {
+    // This test mocks out a request flow. We need to simulate a request that
+    // doesn't have a response socket bound (not sure how this can happen) but
+    // appears to be possible based on issue #28
+
+    engineStubs.get.yields(null, null);
+
+    const mw = mod({
+      defaultTtl: 5000,
+      namespace: 'expresstest',
+      engine: engineStubs
+    })
+
+    const req = {
+      headers: {},
+      originalUrl: '/test/socket-event',
+      url: '/socket-event',
+      method: 'GET'
+    }
+
+    const res = new EventEmitter()
+
+    res.set = sinon.stub()
+
+    res.write = function () {
+      expect(engineStubs.get.calledOnce).to.be.true;
+      expect(res.set.calledOnce).to.be.true;
+      done()
+    }
+
+    res.end = function (data) {
+      res.write(data)
+    }
+
+    // Trigger the socket bind event so it occurs shortly
+    // after the middleware has configured our request
+    setTimeout(() => {
+      res.socket = {
+        write: sinon.stub()
+      }
+
+      res.emit('socket')
+    }, 100)
+
+    mw(req, res, () => res.end('all good'))
+  })
 
   it('should not expose header', done => {
     app = require('express')();
