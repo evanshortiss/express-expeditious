@@ -3,8 +3,7 @@
 const supertest = require('supertest');
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const fs = require('fs');
-const path = require('path');
+const EventEmitter = require('events')
 
 describe('cache middleware', function () {
 
@@ -347,5 +346,33 @@ describe('cache middleware', function () {
       namespace: 'expresscache'
     });
   });
+
+  it('should wait for a socket', (done) => {
+    const mw = mod({
+      shouldCache: shouldCacheStub,
+      defaultTtl: 5000,
+      namespace: 'expresstest',
+      engine: engineStubs
+    })
+
+    const req = {
+      headers: {},
+      url: '/test/socket-event'
+    }
+
+    const res = new EventEmitter()
+
+    res.write = function () {
+      done()
+    }
+
+    res.end = function (data) {
+      res.write(data)
+    }
+
+    mw(req, res, () => {
+      res.end('all good')
+    })
+  })
 
 });
