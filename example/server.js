@@ -43,7 +43,7 @@ app.get('/', cache, delay(), (req, res) => {
 app.get(
   '/ping',
   cache,
-  delay(),
+  delay(5000),
   (req, res) => {
     res.render('pong', {
       url: req.originalUrl

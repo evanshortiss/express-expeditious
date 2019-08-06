@@ -4,6 +4,7 @@ const supertest = require('supertest');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 const EventEmitter = require('events')
+const http = require('http')
 
 describe('cache middleware', function () {
 
@@ -361,6 +362,7 @@ describe('cache middleware', function () {
     })
 
     const req = {
+      on: sinon.stub(),
       headers: {},
       originalUrl: '/test/socket-event',
       url: '/socket-event',
@@ -450,6 +452,69 @@ describe('cache middleware', function () {
         expect(res.headers['x-cool-cached']).to.equal('miss')
         done()
       });
+  })
+
+  it('should not cache a request that errors', (done) => {
+    const REQ_TIMEOUT = 250
+    const ASSERT_TIMEOUT = 1000
+
+    engineStubs.get.yields(null, null);
+    shouldCacheStub.returns(true);
+
+    let clientReq = null
+    const app = require('express')()
+    const port = Math.floor(Math.random() * 60000) + 1024
+
+    app.use(
+      mod({
+        shouldCache: shouldCacheStub,
+        defaultTtl: 5000,
+        namespace: 'expresstest',
+        engine: engineStubs
+      })
+    )
+
+    app.post('/', (req, res) => {
+      // Set the client to kill connection during the response
+      setTimeout(() => clientReq.socket.end(), REQ_TIMEOUT)
+
+      setTimeout(() => res.write('O'), REQ_TIMEOUT / 2)
+      setTimeout(() => res.write('K'), REQ_TIMEOUT)
+      setTimeout(() => res.end(), REQ_TIMEOUT * 2)
+    })
+
+    const server = app.listen(port, (err) => {
+      if (err) {
+        return done(err)
+      }
+
+      // Make a http request, then abort it before the server responds
+      clientReq = http.request({
+        port: port,
+        host: 'localhost',
+        path: '/',
+        method: 'POST'
+      }, (res) => {})
+      clientReq.on('error', () => {}) // Required to prevent uncaught expection
+      clientReq.write('hello')
+
+      setTimeout(() => {
+        try {
+          // Should try read from cache to fulfill the request
+          expect(engineStubs.get.called).to.be.true;
+          // Should not cache since request was aborted by the client
+          expect(engineStubs.set.called).to.be.false;
+          // This is called if a cache miss occurs as is the case here
+          expect(shouldCacheStub.called).to.be.true
+
+          server.close(done)
+        } catch (e) {
+          server.close(() => {
+            done(e)
+          })
+        }
+      }, ASSERT_TIMEOUT)
+    })
   })
 
 });
