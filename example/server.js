@@ -2,6 +2,7 @@
 
 const join = require('path').join
 const request = require('request')
+const delay = require('delay')
 
 // express middleware that will use an expeditious instance for caching
 const cache = require('../lib/middleware')({
@@ -22,7 +23,7 @@ const compress = require('compression')({
 // Our express application
 const app = require('express')()
 
-function delay (timeout) {
+function delayMiddleware (timeout) {
   return (req, res, next) => {
     setTimeout(() => {
       next()
@@ -35,7 +36,7 @@ app.set('views', join(__dirname, './views'))
 app.set('view engine', 'pug')
 
 // render the home page
-app.get('/', cache, delay(), (req, res) => {
+app.get('/', cache, delayMiddleware(), (req, res) => {
   res.render('index')
 })
 
@@ -43,7 +44,7 @@ app.get('/', cache, delay(), (req, res) => {
 app.get(
   '/ping',
   cache,
-  delay(5000),
+  delayMiddleware(5000),
   (req, res) => {
     res.render('pong', {
       url: req.originalUrl
@@ -57,7 +58,7 @@ app.get(
 app.get(
   '/pipe',
   cache.withCondition((req) => !req.query.noCache).withTtl('1 hour'),
-  delay(),
+  delayMiddleware(),
   (req, res) => {
     request.get('http://www.facebook.com').pipe(res)
   }
@@ -67,7 +68,7 @@ app.get(
 app.get(
   '/sendfile',
   cache,
-  delay(),
+  delayMiddleware(),
   (req, res) => {
     res.sendFile(join(__dirname, 'server.js'))
   }
@@ -77,12 +78,25 @@ app.get(
 app.get(
   '/write',
   cache,
-  delay(),
   (req, res) => {
-    res.write('1')
-    res.write('2-2')
-    res.write('3-3-3')
-    res.end()
+    delay(1000)
+      .then(() => {
+        res.write('1')
+        console.log('wrote chunk 1')
+      })
+      .then(() => delay(1000))
+      .then(() => {
+        res.write('2')
+        console.log('wrote chunk 2')
+      })
+      .then(() => delay(1000))
+      .then(() => {
+        res.write('3')
+        console.log('wrote chunk 3')
+      })
+      .then(() => delay(1000))
+      .then(() => res.end())
+      .then(() => console.log('request complete'))
   }
 )
 
@@ -105,7 +119,7 @@ app.get('/flush-cache', (req, res) => {
 })
 
 // 404 page, also has a deliberate delay
-app.use(cache, delay(), (req, res) => {
+app.use(cache, delayMiddleware(), (req, res) => {
   res.status(404).render('not-found')
 })
 
