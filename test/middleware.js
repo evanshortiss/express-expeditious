@@ -370,30 +370,30 @@ describe('cache middleware', function () {
     }
 
     const res = new EventEmitter()
+    const data = 'all good'
 
     res.set = sinon.stub()
-
-    res.write = function () {
-      expect(engineStubs.get.calledOnce).to.be.true;
-      expect(res.set.calledOnce).to.be.true;
-      done()
-    }
-
     res.end = function (data) {
-      res.write(data)
+      res.socket.write(data)
     }
 
     // Trigger the socket bind event so it occurs shortly
-    // after the middleware has configured our request
+    // after the middleware has configured our request.
+    // If the event handlers are bound correctly in middleware.js
+    // then socket.write will be called
     setTimeout(() => {
       res.socket = {
-        write: sinon.stub()
+        write: (data) => {
+          expect(engineStubs.get.calledOnce).to.be.true;
+          expect(res.set.calledOnce).to.be.true;
+          expect(data.toString()).to.equal(data)
+          done()
+        }
       }
-
       res.emit('socket')
     }, 100)
 
-    mw(req, res, () => res.end('all good'))
+    mw(req, res, () => res.end(data))
   })
 
   it('should not expose header', done => {
