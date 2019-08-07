@@ -370,7 +370,7 @@ describe('cache middleware', function () {
     }
 
     const res = new EventEmitter()
-    const data = 'all good'
+    const responseText = 'all good'
 
     res.set = sinon.stub()
     res.end = function (data) {
@@ -386,14 +386,14 @@ describe('cache middleware', function () {
         write: (data) => {
           expect(engineStubs.get.calledOnce).to.be.true;
           expect(res.set.calledOnce).to.be.true;
-          expect(data.toString()).to.equal(data)
+          expect(data.toString()).to.equal(responseText)
           done()
         }
       }
       res.emit('socket')
     }, 100)
 
-    mw(req, res, () => res.end(data))
+    mw(req, res, () => res.end(responseText))
   })
 
   it('should not expose header', done => {
