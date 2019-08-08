@@ -1,14 +1,15 @@
-'use strict';
+'use strict'
+
+/* eslint-env mocha */
 
 var expect = require('chai').expect
-  , sinon = require('sinon');
+var sinon = require('sinon')
 
 describe('verify-options', function () {
-
-  const mod = require('lib/verify-options');
+  const mod = require('lib/verify-options')
 
   it('should throw AssertionError - invalid opts.shouldCache', function () {
-    const iomStub = sinon.stub().returns(true);
+    const iomStub = sinon.stub().returns(true)
 
     expect(function () {
       mod({
@@ -16,12 +17,12 @@ describe('verify-options', function () {
           isObjectMode: iomStub
         },
         shouldCache: 'nope'
-      });
-    }).to.throw('opts.shouldCache should be a function');
-  });
+      })
+    }).to.throw('opts.shouldCache should be a function')
+  })
 
   it('should throw AssertionError - invalid opts.genCacheKey', function () {
-    const iomStub = sinon.stub().returns(true);
+    const iomStub = sinon.stub().returns(true)
 
     expect(function () {
       mod({
@@ -29,34 +30,34 @@ describe('verify-options', function () {
           isObjectMode: iomStub
         },
         genCacheKey: 'nope'
-      });
-    }).to.throw('opts.genCacheKey should be a function if provided');
-  });
+      })
+    }).to.throw('opts.genCacheKey should be a function if provided')
+  })
 
   it('should throw AssertionError - "namespace" required if opts.expeditious not provided', function () {
-    expect(function() {
+    expect(function () {
       mod({
         defaultTtl: '1 hour'
-      });
-    }).to.throw('opts.namespace must be a non-empty string');
-  });
+      })
+    }).to.throw('opts.namespace must be a non-empty string')
+  })
 
   it('should throw AssertionError - "defaultTtl" required if opts.expeditious not provided', function () {
-    expect(function() {
+    expect(function () {
       mod({
         namespace: 'tester'
-      });
-    }).to.throw('opts.defaultTtl must be a number');
-  });
+      })
+    }).to.throw('opts.defaultTtl must be a number')
+  })
 
   it('should throw AssertionError - "defaultTtl" should be a string or number', function () {
-    expect(function() {
+    expect(function () {
       mod({
         namespace: 'tester',
         defaultTtl: {}
-      });
-    }).to.throw('opts.defaultTtl must be a number of milliseconds or a timestring');
-  });
+      })
+    }).to.throw('opts.defaultTtl must be a number of milliseconds or a timestring')
+  })
 
   it('should throw AssertionError - "statusCodeExpires" should be an object', () => {
     expect(function () {
@@ -64,9 +65,9 @@ describe('verify-options', function () {
         defaultTtl: 30000,
         namespace: 'testing',
         statusCodeExpires: 'string is not valid'
-      });
-    }).to.throw('opts.statusCodeExpires should be an object');
-  });
+      })
+    }).to.throw('opts.statusCodeExpires should be an object')
+  })
 
   it('should throw AssertionError - "cacheStatusHeader" should be a boolean or string', () => {
     expect(function () {
@@ -74,22 +75,22 @@ describe('verify-options', function () {
         defaultTtl: 30000,
         namespace: 'testing',
         cacheStatusHeader: {}
-      });
-    }).to.throw('opts.cacheStatusHeader should be a boolean or string if provided');
+      })
+    }).to.throw('opts.cacheStatusHeader should be a boolean or string if provided')
 
     expect(function () {
       mod({
         defaultTtl: 30000,
         namespace: 'testing',
         cacheStatusHeader: function () {}
-      });
-    }).to.throw('opts.cacheStatusHeader should be a boolean or string if provided');
-  });
+      })
+    }).to.throw('opts.cacheStatusHeader should be a boolean or string if provided')
+  })
 
   it('should pass verification', function () {
-    var iomStub = sinon.stub();
+    var iomStub = sinon.stub()
 
-    iomStub.returns(true);
+    iomStub.returns(true)
 
     mod({
       expeditious: {
@@ -100,7 +101,6 @@ describe('verify-options', function () {
       },
       genCacheKey: function () {},
       shouldCache: function () {}
-    });
-  });
-
-});
+    })
+  })
+})

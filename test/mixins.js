@@ -1,35 +1,37 @@
-'use strict';
+'use strict'
 
-const expect = require('chai').expect;
-const sinon = require('sinon');
+/* eslint-env mocha */
+
+const expect = require('chai').expect
+const sinon = require('sinon')
 
 describe('mixins', () => {
-  let mod, getter, middleware, opts, cache;
+  let mod, getter, middleware, opts, cache
 
   beforeEach(() => {
-    getter = sinon.stub();
-    middleware = {};
+    getter = sinon.stub()
+    middleware = {}
     opts = {
       defaultTtl: 60000,
       namespace: 'awesomeurls',
       statusCodeExpires: {
         404: 60 * 60 * 1000
       }
-    };
+    }
     cache = {
       flush: sinon.stub()
-    };
+    }
 
-    mod = require('lib/mixins')(getter, middleware, opts, cache);
-  });
+    mod = require('lib/mixins')(getter, middleware, opts, cache)
+  })
 
   describe('#withTtl', () => {
     it('should invoke a new instance with ttl of 1 hour', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withTtl('1 hour');
+      const ret = mod.withTtl('1 hour')
 
       expect(
         getter.calledWith({
@@ -37,19 +39,19 @@ describe('mixins', () => {
           namespace: opts.namespace,
           statusCodeExpires: opts.statusCodeExpires
         })
-      ).to.be.true;
+      ).to.equal(true)
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#withTtlForStatus', () => {
     it('should invoke a new instance with updated statusCodeExpires', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withTtlForStatus(60 * 1000, 500);
+      const ret = mod.withTtlForStatus(60 * 1000, 500)
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
@@ -58,19 +60,19 @@ describe('mixins', () => {
           404: 60 * 60 * 1000,
           500: 60 * 1000
         }
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
+      expect(ret).to.equal(newInstance)
+    })
 
     it('should invoke a new instance with statusCodeExpires assigned', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      delete opts.statusCodeExpires; // test if no expires already exist
+      delete opts.statusCodeExpires // test if no expires already exist
 
-      const ret = mod.withTtlForStatus(60 * 1000, 500);
+      const ret = mod.withTtlForStatus(60 * 1000, 500)
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
@@ -78,168 +80,167 @@ describe('mixins', () => {
         statusCodeExpires: {
           500: 60 * 1000
         }
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#withCondition', () => {
     it('should invoke a new instance with a new shouldCache entry', () => {
-      const newInstance = {};
+      const newInstance = {}
       const fn = () => {
-        return true;
-      };
+        return true
+      }
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withCondition(fn);
+      const ret = mod.withCondition(fn)
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
         namespace: opts.namespace,
         statusCodeExpires: opts.statusCodeExpires,
         shouldCache: fn
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#withConfigOverrides', () => {
     it('should invoke a new instance overrides for the originals', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
       const ret = mod.withConfigOverrides({
         namespace: 'newnamespace',
         defaultTtl: 10000
-      });
+      })
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: 10000,
         namespace: 'newnamespace',
         statusCodeExpires: opts.statusCodeExpires
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#withNamespace', () => {
     it('should invoke a new instance with a new namespace', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withNamespace('ns');
+      const ret = mod.withNamespace('ns')
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
         namespace: 'ns',
         statusCodeExpires: opts.statusCodeExpires
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#withCacheKey', () => {
     it('should invoke a new instance the new genCacheKey function', () => {
-      const newInstance = {};
+      const newInstance = {}
       const fn = () => {
-        return 'key';
-      };
+        return 'key'
+      }
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withCacheKey(fn);
+      const ret = mod.withCacheKey(fn)
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
         namespace: opts.namespace,
         statusCodeExpires: opts.statusCodeExpires,
         genCacheKey: fn
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#withSessionAwareness', () => {
     it('should invoke a new instance with opts.sessionAware = false', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withSessionAwareness(false);
+      const ret = mod.withSessionAwareness(false)
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
         namespace: opts.namespace,
         statusCodeExpires: opts.statusCodeExpires,
         sessionAware: false
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
+      expect(ret).to.equal(newInstance)
+    })
 
     it('should invoke a new instance with opts.sessionAware = true', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withSessionAwareness(true);
+      const ret = mod.withSessionAwareness(true)
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
         namespace: opts.namespace,
         statusCodeExpires: opts.statusCodeExpires,
         sessionAware: true
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
+      expect(ret).to.equal(newInstance)
+    })
 
     it('should invoke a new instance with opts.sessionAware = true', () => {
-      const newInstance = {};
+      const newInstance = {}
 
-      getter.returns(newInstance);
+      getter.returns(newInstance)
 
-      const ret = mod.withSessionAwareness();
+      const ret = mod.withSessionAwareness()
 
       expect(getter.getCall(0).args[0]).to.deep.equal({
         defaultTtl: opts.defaultTtl,
         namespace: opts.namespace,
         statusCodeExpires: opts.statusCodeExpires,
         sessionAware: true
-      });
+      })
 
-      expect(ret).to.equal(newInstance);
-    });
-  });
+      expect(ret).to.equal(newInstance)
+    })
+  })
 
   describe('#flush', () => {
     it('should call flush on the underlying cache and succeed', (done) => {
-      cache.flush.yields(null);
+      cache.flush.yields(null)
 
       mod.flush('ns', () => {
-        expect(cache.flush.called).to.be.true;
-        done();
-      });
-    });
+        expect(cache.flush.called).to.equal(true)
+        done()
+      })
+    })
 
     it('should call flush on the underlying cache and get an error', (done) => {
-      cache.flush.yields(new Error('something went wrong'));
+      cache.flush.yields(new Error('something went wrong'))
 
       mod.flush('ns', (err) => {
         expect(err.toString()).to.contain(
-        `error flushing cache for namespace ${opts.namespace} : ns`
-        );
-        done();
-      });
-    });
-  });
-
-});
+          `error flushing cache for namespace ${opts.namespace} : ns`
+        )
+        done()
+      })
+    })
+  })
+})

@@ -18,7 +18,7 @@
   "homepage": "https://github.com/evanshortiss/express-expeditious",
   "scripts": {
     "test": "npm run lint && npm run unit && npm run coverage && npm run check-coverage",
-    "lint": "standard lib/*.js example/*.js benchmark/*.js --fix && npm run linelint",
+    "format": "standard lib/**.js example/**.js benchmark/**.js --fix && standard test/**.js  --fix --env mocha && npm run linelint",
     "linelint": "linelint ls lib/*.js",
     "unit-debug": "NODE_PATH=. mocha --inspect-brk test/",
     "unit": "NODE_PATH=. mocha test/",
@@ -47,6 +47,11 @@
   ],
   "author": "Evan Shortiss",
   "license": "MIT",
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run unit && npm run format"
+    }
+  },
   "dependencies": {
     "debug": "~4.1.0",
     "expeditious": "~1.0.1",
