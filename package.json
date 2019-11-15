@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@types/express": "~4.17.0",
-    "@types/node": "~12.11.0",
+    "@types/node": "~12.12.8",
     "async": "~3.1.0",
     "benchmark": "~2.1.4",
     "bluebird": "~3.7.0",
