@@ -53,7 +53,7 @@
     }
   },
   "dependencies": {
-    "debug": "~4.1.0",
+    "debug": "~4.3.1",
     "expeditious": "~1.0.1",
     "expeditious-engine-memory": "~0.2.0",
     "on-finished": "~2.3.0",
